@@ -2,7 +2,7 @@ fluidPage(
       tabsetPanel(
 ###### Upregulated genes #####################################
 ## BP up #############################
-        tabPanel( "Upregulated genes",          # pestaña upregulates
+        tabPanel( "DEG genes",          # pestaña upregulates
             tabsetPanel(  # tabsetpanel up
              tabPanel("Biological Proccess",
             fluidRow(  # primera fila
