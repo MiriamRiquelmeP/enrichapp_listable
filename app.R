@@ -68,7 +68,10 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                     options = list(title="annotation"),
                                     selected = NULL
                                   )
-                                )
+                                ),
+                                sidebarMenu("", sidebarMenuOutput("menuKegg")),
+                                sidebarMenu("", sidebarMenuOutput("menuGO")),
+                                sidebarMenu("", sidebarMenuOutput("menuGSEA"))
                             )
                             )
 
@@ -253,12 +256,12 @@ server <- function(input, output, session) {
     }
   })
   #TODO: Definir qué hacer con los NAs, eliminar, reportar, etc
-  
+  ## Acciones al pulsar enrich Button ################################################
   observeEvent(input$enrichButton,{
-    kgg$all <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
-    kggDT$all <- kegg2DT(kgg$all, data$df[,c("SYMBOL","ENTREZID") ] )
-    go$all <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
-    goDT$all <- go2DT(enrichdf = go$all, data = data$df[,c("SYMBOL","ENTREZID") ] )
+    kgg$up <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
+    kggDT$up <- kegg2DT(kgg$up, data$df[,c("SYMBOL","ENTREZID") ] )
+    go$up <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
+    goDT$up <- go2DT(enrichdf = go$up, data = data$df[,c("SYMBOL","ENTREZID") ] )
     if( dim(data$df)[2]==4 ){
       gsea$gsea <- gseaKegg(data$df[, c("ENTREZID","rank")], specie() )
     }
@@ -270,6 +273,7 @@ server <- function(input, output, session) {
     validate(need(annotation(),""))
     textAreaInput(inputId = "geneList", label = "Input gene list ...", resize = "vertical")
   })
+  
   ## Gene FIle #####################
   output$geneFile <- renderUI({
     validate(need(specie(),""))
@@ -282,17 +286,327 @@ server <- function(input, output, session) {
     validate(need(annotation(),""))
     actionButton("geneButton", label = "Click to validate data")
   })
-  ## boton enrich
+  ## boton enrich #########################
   output$enrichbutton <- renderUI({
     validate(need(data$df, ""))
     actionBttn("enrichButton", label = "Click to run enrichment", size="lg", color="default", icon = icon("images"))
   })
-  ##### tabla de prubea ##### para eliminar
-  output$tabla <- renderTable({
-    validate(need(data$df,""))
-    print(data$df)
+  
+
+## sidebar menu kegg ###################
+  output$menuKegg <- renderMenu({
+      validate(need(kgg$up, ""))
+      sidebarMenu(
+          menuItem(
+              "Kegg Enrichment",
+              tabName = "kegg",
+              icon = icon("chart-bar")
+          )
+          )
+          })
+      
+  ## side menubar GO #########################
+      output$menuGO <- renderMenu({
+      validate(need(go$up,""))
+      sidebarMenu(  
+        menuItem(
+              "GO Enrichment",
+              tabName = "go",
+              icon = icon("chart-bar")
+          )
+        )
+      })
+  ## sidebar menu GSEA #####################333
+  output$menuGSEA <- renderMenu({
+      validate(need(gsea$gsea,""))
+      sidebarMenu(  
+          menuItem("GSEA",
+                   tabName = "gsea",
+                   icon = icon("chart-line"))
+        )
+      })
+  
+  # variables KEGG ##########################
+  rowsUp <- reactive({input$table_rows_selected})
+  
+ # KEGG table up#####################################
+  output$table <- DT::renderDT(server=TRUE,{
+    validate(need(kgg$up, "Load file to render table"))
+    names(kggDT$up)[names(kggDT$up) == "DE"] <- "DEG"
+    names(kggDT$up)[names(kggDT$up) == "P.DE"] <- "p-value"
+    tituloTabla <- paste0("Table: Kegg DEG genes")
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "kegg",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "kegg",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(
+      kggDT$up,
+      vars = c("genes"),
+      filter = list(position="top", clear=FALSE),
+      escape = FALSE,
+      opts = list(order = list(list(5, 'asc')),
+        pageLength = 10, white_space = "normal",
+        buttons = customButtons))
+  }) 
+  # KEGG barplot up################
+  output$keggPlot <- renderPlotly ({
+    validate(need(kgg$up, "Load file to render BarPlot"))
+    rowsUp <- rowsUp()
+    if(is.null(rowsUp)){
+        if( dim(kgg$up)[1]<10 ){rowsUp <-  seq_len(nrow(kgg$up)) }
+        else{ rowsUp <-  seq_len(10)  }
+        }
+    plotKegg(enrichdf = kgg$up[rowsUp,], nrows = length(rowsUp), colors = c(input$upColor))
+  })
+  # KEGG chordiag plot up ###############
+  output$keggChord <- renderChorddiag({
+    validate(need(kgg$up, "Load file to render ChordPlot"))
+    rowsUp<- rowsUp()
+    if(is.null(rowsUp)){
+        if( dim(kgg$up)[1]<10 ){rowsUp <-  seq_len(nrow(kgg$up)) }
+        else{ rowsUp <-  seq_len(10)  }
+        }
+    chordPlot(kgg$up[rowsUp, ], nRows = length(rowsUp), orderby = "P.DE")
+  })
+ output$legendChorUp <- renderPlot({
+    validate(need(kgg$up, "Load file to render ChordPlot"))
+    rowsUp <- rowsUp()
+    if(is.null(rowsUp)){
+        if (dim(kgg$up)[1] < 10) {rowsUp <-  seq_len(nrow(kgg$up))}
+        else{rowsUp <-  seq_len(10)}
+        
+        }
+    legendChorplot(kgg$up[rowsUp, ] )
+  })
+  # KEGG dotplot UP ################### 
+  output$keggDotUp <- renderPlot({
+    validate(need(kgg$up, "Load file and select to render dotPlot"))
+    validate(need(rowsUp(), "Select the paths of interest to render DotPlot"))
+    rowsUp <- rowsUp()
+    if(is.null(rowsUp)){rowsUp <- c(1:20)}
+    dotPlotkegg(kgg$up[rowsUp,], n = length(rowsUp))
+  })
+  # KEGG heatmap Up #################
+  output$heatmapKeggUp <- renderPlot({
+    validate(need(kgg$up, "Load file and select to render Heatmap"))
+    validate(need(rowsUp(), "Select the paths of interest to render HeatMap"))
+    validate(need(kggDT$up, ""))
+    heatmapKegg(kggDT$up, rowsUp())
+  })
+  # KEGG cnet Up #################
+  output$cnetKeggUp <- renderPlot({
+    validate(need(kgg$up, "Load file and select to render Net Plot"))
+    validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
+    customCnetKegg(kgg$up, rowsUp())
+  })
+ 
+ # variable GO ###################################
+    bprowsup <- reactive({input$tableBP_rows_selected})
+    mfrowsup <- reactive({input$tableMF_rows_selected})
+    ccrowsup <- reactive({input$tableCC_rows_selected})
+  
+ # GO table BP UP#####################
+  output$tableBP <- DT::renderDataTable(server=TRUE,{
+    validate(need(goDT$up, "Load file to render table"))
+    goDT <- goDT$up
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-BP DEG genes")
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "BPup",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "BPup",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="BP",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           pageLength = 10, white_space = "normal",
+                           buttons = customButtons))
+  })
+  # GO plots BP UP #####################
+  output$plotBP <- renderPlotly({
+    validate(need(go$up, "Load file to render plot"))
+    bprowsup <- bprowsup()
+    if(is.null(bprowsup)){bprowsup <- c(1:10)}
+    gosBP <- go$up[go$up$Ont=="BP",]
+    plotGO(enrichdf = gosBP[bprowsup, ], nrows = length(bprowsup), ont="BP",
+           colors = c(input$upColor) )
+  })
+  # GO BP dotplot up ################### 
+  output$BPDotUp <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    validate(need(bprowsup(), "Select the terms of interest to render DotPlot"))
+    bprowsup <- bprowsup()
+    if(is.null(bprowsup)){bprowsup <- c(1:20)}
+    gosBP <- go$up[go$up$Ont=="BP",]
+    dotPlotGO(gosBP[bprowsup,], n = length(bprowsup))
+  })
+  # GO table MF UP #####################
+  output$tableMF <- DT::renderDataTable({
+    validate(need(goDT$up, "Load file to render table"))
+    goDT <- goDT$up
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-MF DEG genes")
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "MFup",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "MFup",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="MF",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           pageLength = 10, white_space = "normal",
+                           buttons = customButtons,
+                           ajax = list(serverSide = TRUE, processing = TRUE))
+    )
+  })
+  # GO plots MF UP #####################
+  output$plotMF <- renderPlotly({
+    validate(need(go$up, "Load file to render plot"))
+    mfrowsup <- mfrowsup()
+    if(is.null(mfrowsup)){mfrowsup <- c(1:10)}
+    gosMF <- go$up[go$up$Ont=="MF",]
+    plotGO(enrichdf = gosMF[mfrowsup, ], nrows = length(mfrowsup), ont = "MF",
+           colors = c(input$upColor) )
+  })
+  # GO MF dotplot up ################### 
+  output$MFDotUp <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    validate(need(mfrowsup(), "Select the terms of interest to render DotPlot"))
+    mfrowsup <- mfrowsup()
+    if(is.null(mfrowsup)){mfrowsup <- c(1:20)}
+    gosMF <- go$up[go$up$Ont=="MF",]
+    dotPlotGO(gosMF[mfrowsup,], n = length(mfrowsup))
+  })
+  # GO table CC UP #####################
+  output$tableCC <- DT::renderDataTable(server=TRUE,{
+    validate(need(goDT$up, "Load file to render table"))
+    goDT <- goDT$up
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-CC DEG genes")
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "CCup",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "CCup",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="CC",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           pageLength = 10, white_space = "normal",
+                           buttons = customButtons,
+                           ajax = list(serverSide = TRUE, processing = TRUE))
+    )
+  })
+  # GO plots CC UP #####################
+  output$plotCC <- renderPlotly({
+    validate(need(go$up, "Load file to render plot"))
+    ccrowsup <- ccrowsup()
+    if(is.null(ccrowsup)){ccrowsup <- c(1:10)}
+    gosCC <- go$up[go$up$Ont=="CC",]
+    plotGO(enrichdf = gosCC[ccrowsup,], nrows = length(ccrowsup), ont="CC",
+           colors = c(input$upColor))
+  })
+  # GO CC dotplot up ################### 
+  output$CCDotUp <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    validate(need(ccrowsup(), "Select the terms of interest to render DotPlot"))
+    ccrowsup <- ccrowsup()
+    if(is.null(ccrowsup)){ccrowsup <- c(1:20)}
+    gosCC <- go$up[go$up$Ont=="CC",]
+    dotPlotGO(gosCC[ccrowsup,], n = length(ccrowsup))
+  })
+    
+  ## variable GSEA
+    gsearow <- reactive({input$gseaTable_rows_selected})
+   
+  # GSEA table ##########################
+  output$gseaTable <- renderDataTable({
+    validate(need(res$sh, "Load file to render table"))
+    gsea$gsea <- gseaKegg(res$sh, specie() )
+    mygsea <- gsea$gsea
+    if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
+        createAlert(session, anchorId = "gsea", title = "Oops!!", 
+          content = "Sorry, I didn't get any significant results for this analysis",
+          append=FALSE, style = "info")
+    } else{
+    table <- mygsea@result[mygsea@result$p.adjust<=0.05 ,2:9] %>% 
+      mutate_at(vars(3:7), ~round(., 4))
+
+    tituloTabla <- paste0("Table: GSEA pathway")
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "GSEAkegg",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "GSEAkegg",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    DT::datatable( table,
+                   rownames=FALSE,
+                   filter = list(position="top", clear=FALSE),
+                   options = list(order = list(list(4, 'asc')),
+                     lengthMenu = list(c(10,25,50,100,-1), c(10,25,50,100,"All")),
+                     columnDefs = list(list(orderable = FALSE,
+                                            className = "details-control",
+                                            targets = 1)
+                     ),
+                     dom = "Bfrtipl",
+                     buttons = customButtons,
+                     list(pageLength = 10, white_space = "normal")
+                   )
+    )
+    }
+  })
+  # GSEA plot ##########################
+  output$gseaPlot <- renderPlot({
+    validate(need(gsea$gsea, "Load file to render table"))
+    gseanr <- gsearow()
+    if(is.null(gseanr)){gseanr <- c(1)}
+    mygsea <- gsea$gsea
+    if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
+        createAlert(session, anchorId = "gseaPlot", title = "Oops!!", 
+          content = "Sorry, I didn't get any significant results for this analysis",
+          append=FALSE, style = "info")
+    } else{
+        enrichplot::gseaplot2(gsea$gsea, geneSetID = gseanr, pvalue_table = TRUE, ES_geom = "line")
+        }
   })
 }
+
 
 
 shinyApp(ui, server)
