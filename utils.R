@@ -9,7 +9,7 @@ validateGeneList <- function(list, specie, annotation){
     aa <- gsub(" ", "", aa)
     geneList <-data.frame(gene = unlist(strsplit(aa, ",")), stringsAsFactors = FALSE)
     geneList <- geneList %>% drop_na(gene)  %>% filter(gene != "") %>% as.data.frame()
-    geneList$gene <- unique(geneList$gene)
+    geneList <- data.frame(gene = unique(geneList$gene))
     return(geneList)
 }
 ## Formatear datos y prepararlos para enrichment #########################

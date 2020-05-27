@@ -204,7 +204,7 @@ server <- function(input, output, session) {
             data$df <- formatData( validatedGene$list, specie(), annotation() )
             lost <- which(is.na(data$df$ENTREZID))
             gene$lost <- data$df$ENSEMBL[lost]
-            data$df <- data$df[-lost, ]
+            if(length(lost)!=0){ data$df <- data$df[-lost, ] }
             data$df$SYMBOL <- ifelse(is.na(data$df$SYMBOL), data$df$ENSEMBL, data$df$SYMBOL )
             }
         }
@@ -218,7 +218,7 @@ server <- function(input, output, session) {
             data$df <- formatData( validatedGene$list, specie(), annotation() )
             lost <- which(is.na(data$df$ENTREZID))
             gene$lost <- data$df$SYMBOL[lost]
-            data$df <- data$df[-lost, ]
+            if(length(lost)!=0){ data$df <- data$df[-lost, ] }
           }
           }
         }
@@ -236,7 +236,7 @@ server <- function(input, output, session) {
                 data$df <- formatData( validatedGene$list, specie(), annotation() )
                 lost <- which(is.na(data$df$ENTREZID))
                 gene$lost <- data$df$ENSEMBL[lost]
-                data$df <- data$df[-lost, ]
+                if(length(lost)!=0){ data$df <- data$df[-lost, ] }
                 data$df$SYMBOL <- ifelse(is.na(data$df$SYMBOL), data$df$ENSEMBL, data$df$SYMBOL )
           }
         }
@@ -249,7 +249,7 @@ server <- function(input, output, session) {
                 data$df <- formatData( validatedGene$list, specie(), annotation() )
                 lost <- which(is.na(data$df$ENTREZID))
                 gene$lost <- data$df$SYMBOL[lost]
-                data$df <- data$df[-lost, ]
+                if(length(lost)!=0){ data$df <- data$df[-lost, ] }
           }
         }
       }
@@ -267,14 +267,14 @@ server <- function(input, output, session) {
     }
   })
   
-  ## Gene LIst ####################
+  ## Gene List ####################
   output$geneList <- renderUI({
     validate(need(specie(),""))
     validate(need(annotation(),""))
     textAreaInput(inputId = "geneList", label = "Input gene list ...", resize = "vertical")
   })
   
-  ## Gene FIle #####################
+  ## Gene File #####################
   output$geneFile <- renderUI({
     validate(need(specie(),""))
     validate(need(annotation(),""))
