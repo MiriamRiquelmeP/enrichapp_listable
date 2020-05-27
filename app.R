@@ -385,7 +385,7 @@ server <- function(input, output, session) {
     legendChorplot(kgg$up[rowsUp, ] )
   })
   # KEGG dotplot UP ################### 
-  output$keggDotUp <- renderPlot({
+  output$keggDotUp <- renderPlotly({
     validate(need(kgg$up, "Load file and select to render dotPlot"))
     validate(need(rowsUp(), "Select the paths of interest to render DotPlot"))
     rowsUp <- rowsUp()
@@ -393,14 +393,14 @@ server <- function(input, output, session) {
     dotPlotkegg(kgg$up[rowsUp,], n = length(rowsUp))
   })
   # KEGG heatmap Up #################
-  output$heatmapKeggUp <- renderPlot({
+  output$heatmapKeggUp <- renderPlotly({
     validate(need(kgg$up, "Load file and select to render Heatmap"))
     validate(need(rowsUp(), "Select the paths of interest to render HeatMap"))
     validate(need(kggDT$up, ""))
     heatmapKegg(kggDT$up, rowsUp())
   })
   # KEGG cnet Up #################
-  output$cnetKeggUp <- renderPlot({
+  output$cnetKeggUp <- renderPlotly({
     validate(need(kgg$up, "Load file and select to render Net Plot"))
     validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
     customCnetKegg(kgg$up, rowsUp())
@@ -447,7 +447,7 @@ server <- function(input, output, session) {
            colors = c(input$upColor) )
   })
   # GO BP dotplot up ################### 
-  output$BPDotUp <- renderPlot({
+  output$BPDotUp <- renderPlotly({
     validate(need(go$up, "Load file to render dotPlot"))
     validate(need(bprowsup(), "Select the terms of interest to render DotPlot"))
     bprowsup <- bprowsup()
@@ -493,7 +493,7 @@ server <- function(input, output, session) {
            colors = c(input$upColor) )
   })
   # GO MF dotplot up ################### 
-  output$MFDotUp <- renderPlot({
+  output$MFDotUp <- renderPlotly({
     validate(need(go$up, "Load file to render dotPlot"))
     validate(need(mfrowsup(), "Select the terms of interest to render DotPlot"))
     mfrowsup <- mfrowsup()
@@ -539,7 +539,7 @@ server <- function(input, output, session) {
            colors = c(input$upColor))
   })
   # GO CC dotplot up ################### 
-  output$CCDotUp <- renderPlot({
+  output$CCDotUp <- renderPlotly({
     validate(need(go$up, "Load file to render dotPlot"))
     validate(need(ccrowsup(), "Select the terms of interest to render DotPlot"))
     ccrowsup <- ccrowsup()

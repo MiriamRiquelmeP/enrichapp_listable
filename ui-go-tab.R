@@ -34,7 +34,7 @@ fluidPage(
                                   plotlyOutput("plotBP")
                                               ),  #barplot
                         tabPanel(title = "Dotplot",
-                                 plotOutput("BPDotUp")
+                                 plotlyOutput("BPDotUp")
                                  ) # dotplot
                         )
                     )
@@ -70,7 +70,7 @@ fluidRow(  # primera fila
                                   plotlyOutput("plotMF")
                                               ),  #barplot
                         tabPanel(title = "Dotplot",
-                                 plotOutput("MFDotUp")
+                                 plotlyOutput("MFDotUp")
                                  ) # dotplot
                         )
                     )
@@ -106,7 +106,7 @@ fluidRow(  # primera fila
                                   plotlyOutput("plotCC")
                                               ),  #barplot
                         tabPanel(title = "Dotplot",
-                                 plotOutput("CCDotUp")
+                                 plotlyOutput("CCDotUp")
                                  ) # dotplot
                             )
                         )

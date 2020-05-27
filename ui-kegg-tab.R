@@ -74,13 +74,13 @@ fluidPage(
                                  ))
                                  ), #cordplot
                         tabPanel(title = "Dotplot",
-                                 plotOutput("keggDotUp")
+                                 plotlyOutput("keggDotUp")
                                  ), # dotplot
                         tabPanel(title = "Heatmap",
-                                 plotOutput("heatmapKeggUp", height = "600px")
+                                 plotlyOutput("heatmapKeggUp", height = "600px")
                                  ), # heatmap
                         tabPanel(title = "Netplot",
-                                 plotOutput("cnetKeggUp")
+                                 plotlyOutput("cnetKeggUp")
                                  ) # cnetplot
                         )
                     )
