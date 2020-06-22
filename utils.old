@@ -1,4 +1,88 @@
-## OLD FUNCTIONS ................####
+## NEW FUNCTIONS ###############################################
+## validate geneList #########
+validateGeneList <- function(list, specie, annotation){
+    aa <- gsub(",$", "", 
+               gsub(",,", ",", 
+                              gsub("\n", ",", list, perl = TRUE),
+                    perl =TRUE),
+               perl = TRUE)
+    aa <- gsub(" ", "", aa)
+    geneList <-data.frame(gene = unlist(strsplit(aa, ",")), stringsAsFactors = FALSE)
+    geneList <- geneList %>% drop_na(gene)  %>% filter(gene != "") %>% as.data.frame()
+    geneList <- data.frame(gene = unique(geneList$gene))
+    return(geneList)
+}
+## Formatear datos y prepararlos para enrichment #########################
+formatData <- function(genelist, specie, annotation){
+  require("EnsDb.Mmusculus.v79")
+  require("org.Mm.eg.db")
+  require("EnsDb.Hsapiens.v86")
+  require("org.Hs.eg.db")
+  require("EnsDb.Rnorvegicus.v79")
+  require("org.Rn.eg.db")
+  genelist <- as.data.frame(genelist)
+  if(annotation=="ensg"){ann="ENSEMBL"}
+    else{ann="SYMBOL"}
+  ## listado simple
+  if( dim(genelist)[2]==1 ){
+    names(genelist)<-ann
+  }
+  ## listado doble
+  if( dim(genelist)[2]==2){
+    names(genelist) <- c(ann, "Rank")
+  }
+
+  if(specie=="Mm"){
+      ensdb <- EnsDb.Mmusculus.v79
+      orgdb <- org.Mm.eg.db
+  }
+    else{
+        ensdb <- EnsDb.Hsapiens.v86
+        orgdb <- org.Hs.eg.db
+    }
+  genelist[[ann]] <- toupper(genelist[[ann]]) # todo a mayusculas
+  if( ann=="SYMBOL" & (specie == "Mm" | specie == "Rn") ){ # si es symbol y mouse o rattus a capital
+    genelist[[ann]] <- stringr::str_to_title(genelist[[ann]])
+    }
+  annot <- NULL
+  genes <- genelist[[ann]]
+  if(ann=="ENSEMBL"){
+    annot$ENSEMBL <- data.frame(ENSEMBL = genes, stringsAsFactors = FALSE)
+    annot$SYMBOL <-  mapIds(ensdb, keys=genes, column="SYMBOL",keytype="GENEID")
+    annot$SYMBOL1 <- mapIds(orgdb, keys = genes, column = 'SYMBOL', keytype = 'ENSEMBL', multiVals = 'first')
+    annot$description <- mapIds(orgdb, keys = genes, column = 'GENENAME', keytype = 'ENSEMBL', multiVals = 'first')
+    annot <- as.data.frame(annot)
+    consensus <- data.frame('Symbol'= ifelse(!is.na(annot$SYMBOL), as.vector(annot$SYMBOL),
+                                             ifelse(!is.na(annot$SYMBOL1),as.vector(annot$SYMBOL1),
+                                                    as.vector(annot$ENSEMBL))), stringsAsFactors = F)
+    annot$consensus <- consensus$Symbol
+    entrez1 <- mapIds(orgdb, keys = annot$consensus, column = "ENTREZID", keytype = "SYMBOL")
+    entrez2 <- mapIds(orgdb, keys = as.character(annot$ENSEMBL),
+                      column = "ENTREZID", keytype = "ENSEMBL")
+    annot$entrez1 <- entrez1
+    annot$entrez2 <- entrez2
+    ENTREZID <- ifelse(!is.na(annot$entrez1), annot$entrez1, annot$entrez2)
+    annot$ENTREZID <- ENTREZID
+    annot <- annot[c("ENSEMBL","consensus","ENTREZID")]
+    names(annot) <- c("ENSEMBL", "SYMBOL", "ENTREZID")
+  }
+  if(ann=="SYMBOL"){
+    annot <- data.frame(SYMBOL = genes, stringsAsFactors = FALSE)
+    annot$ENSEMBL <-  mapIds(orgdb, keys=genes, column="ENSEMBL",keytype="SYMBOL")
+    entrez1 <- mapIds(orgdb, keys = annot$SYMBOL, column = "ENTREZID", keytype = "SYMBOL")
+    entrez2 <- mapIds(orgdb, keys = as.character(annot$ENSEMBL),
+                      column = "ENTREZID", keytype = "ENSEMBL")
+    annot$entrez1 <- entrez1
+    annot$entrez2 <- unlist(unname(lapply(entrez2, function(x){ifelse(is.null(x), NA, x)})))
+    ENTREZID <- ifelse(!is.na(annot$entrez1), annot$entrez1, annot$entrez2)
+    annot$ENTREZID <- ENTREZID
+    annot <- annot[c("ENSEMBL","SYMBOL","ENTREZID")]
+  }
+  if(dim(genelist)[2]==2){
+      annot$rank <- genelist[ ,2]
+  }
+  return(as.data.frame(annot) )
+}
 # Chorplot ##########################################
 legendChorplot <- function(enrichdf){
     labels <- enrichdf$Pathway
@@ -124,7 +208,7 @@ customCnet2Cytoscape <- function(kgg, category=NULL, nPath=NULL, byDE=FALSE){
 }
 
 # Plot para plotear cnet para kegg ###############
-customCnetKegg <- function(kgg, category=NULL, nPath=NULL, byDE=FALSE, nr, genesUp, genesDown){
+customCnetKegg <- function(kgg, category=NULL, nPath=NULL, byDE=FALSE, nr){
     if(! "ggraph" %in% .packages()) require("ggraph")
     if(! "igraph" %in% .packages()) require("igraph")
     if(! "dplyr" %in% .packages()) require("dplyr")
@@ -148,10 +232,6 @@ customCnetKegg <- function(kgg, category=NULL, nPath=NULL, byDE=FALSE, nr, genes
             tmp <- tmp[1:nPath, ]
         } else{ stop("nPath must be numeric or NULL")}
     }
-    genesUp$dir <- "#ffa200"
-    #genesDown$dir <- "#91ebff"
-    #genesAll <- rbind(genesUp,genesDown)
-    genesAll <- genesUp
     pval <- tmp[,c(1,4)]
     tmp <- tmp[,c(1,6)]
     tmp2 <- tmp %>%  separate_rows( genes, convert=TRUE)
@@ -175,15 +255,11 @@ customCnetKegg <- function(kgg, category=NULL, nPath=NULL, byDE=FALSE, nr, genes
         geom_node_point( aes_(color=~pval, size=~size) ) +
         scale_size(range=c(3, 10), breaks=unique(round(seq(min(size), max(size), length.out=4)))) +
         theme_void()
-    ##
-    ptmp <- p$data
-    ptmp2 <- left_join(ptmp, genesAll, by = c("name"="ENTREZID"))
-    genesColor <- ptmp2$dir[!is.na(ptmp2$dir)]
-    ##
     p <- p + geom_node_text(aes_(label=~name), data = p$data[1:n,]) +
-        scale_color_gradientn(name = "pval", colors=palette, na.value = genesColor )
+        scale_color_gradientn(name = "pval", colors=palette, na.value = "#E5C494")
     return(p)
- }
+}
+
 # Plot para plotear cnet para GO ###############
 customCnetGo <- function(gos, category=NULL, nTerm=NULL, byDE=FALSE, ont="BP"){
     if(! "ggraph" %in% .packages()) require("ggraph")
@@ -1253,35 +1329,6 @@ heatmapKegg <- function(kdt, nr){
     scale_fill_manual(values = getPalette(colourCount))+
     theme(text = element_text(size=ySize, angle=0), plot.margin = unit(c(15,25,15,15), "pt"))
 }
-
-####
-# HeatMapKegg con logFC ######
-####
-heatmapKeggLogFC <- function(kdt, res, nr){
-    kdt <- kdt[nr, ]
-    kk <- kdt %>% dplyr::select(Pathway, genes) %>% separate_rows(Pathway, genes, sep=",")
-    kk$genes <- gsub(" ", "", kk$genes)
-    resSig <- res[ which(res$GeneName_Symbol %in% kk$genes), ]
-    kk2 <- resSig %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
-    kk3 <- left_join(kk, kk2, by = c("genes"="GeneName_Symbol"))
-    kk3$padj <- format(kk3$padj, scientific = TRUE, digits = 3)
-    yNum <- length(unique(kdt$Pathway))
-    if(yNum <=35){ySize=12}else if(yNum>35 | yNum <=50){ySize=10}else{ySize=0}
-    xNum <- length(unique(kdt$genes))
-    if(xNum <=60){xSize=8}else if(xNum>60 | yNum <=80){xSize=7}else{xSize=0}
-    
-    kk3 %>% ggplot(aes_(~genes, ~Pathway)) + 
-    geom_tile(aes_(fill = ~log2FoldChange, label= ~padj), color = 'black', size =0.2) +
-    xlab(NULL) + ylab(NULL) +
-    theme_minimal() +
-    theme(panel.grid.major = element_line(colour = "gray88", size = 0.8),
-          axis.text.x=element_text(angle = 90, hjust = 1, vjust = 0.5, size=xSize))+
-    scale_fill_gradient2(low="blue", mid = "gray88", high="red", name = "Log2FC")+
-    # scale_fill_brewer(palette = "YlOrRd")
-    # scale_fill_manual(values = getPalette(colourCount))+
-    theme(text = element_text(size=ySize, angle=0), plot.margin = unit(c(15,25,15,15), "pt"))
-}
-
 # Función para crear dataset para hacer GSEA pathway ##################
 buildKeggDataset <- function(specie="Mm"){
   require("dplyr")
@@ -1300,14 +1347,14 @@ buildKeggDataset <- function(specie="Mm"){
 gseaKegg <- function(res, specie){
   pathwayDataSet <- readRDS(paste0("./resources/",specie,"/GSEA/keggDataGSEA.Rds"))
   res.sh <- res
-  #res.sh <- as.data.frame(lfcShrink(dds, coef=2, type="apeglm", res = results(dds)))
-  res.sh <- res.sh[order(res.sh$log2FoldChange, decreasing = TRUE), ]
-  res.sh$ENSEMBL <- rownames(res.sh)
-  geneRank <- geneIdConverter( res.sh$ENSEMBL)
-  resRank <- left_join(res.sh, geneRank, by=c("ENSEMBL"="ENSEMBL"))
-  resRank <- resRank[!is.na(resRank$ENTREZID), c("ENTREZID","log2FoldChange") ]
-  vectRank <- resRank$log2FoldChange
-  attr(vectRank, "names") <- as.character(resRank$ENTREZID)
+  res.sh <- res.sh[order(res.sh$rank, decreasing = TRUE), ]
+  # res.sh$ENSEMBL <- rownames(res.sh)
+  # geneRank <- geneIdConverter( res.sh$ENSEMBL)
+  # resRank <- left_join(res.sh, geneRank, by=c("ENSEMBL"="ENSEMBL"))
+  # resRank <- resRank[!is.na(resRank$ENTREZID), c("ENTREZID","rank") ]
+  #vectRank <- resRank$rank
+  vectRank <- res.sh$rank
+  attr(vectRank, "names") <- as.character(res.sh$ENTREZID)
   mygsea <- clusterProfiler::GSEA(vectRank, 
                                   TERM2GENE = pathwayDataSet, 
                                   by="fgsea", pvalueCutoff = 0.1)
@@ -2007,7 +2054,7 @@ heat2 <- function (vsd, n = 40, intgroup = NULL, sampleName = NULL,
     ann_colors[[intgroup[2]]] <- colorRampPalette( brewer.pal(11, "Spectral") )(numCol)
     names(ann_colors[[intgroup[2]]]) <- c(levels(as.factor(df[[intgroup[2]]]) ))}
 
-    ann <- c(ann_colors[[intgroup[1]]], ann_colors[[intgroup[2]]])
+    ann <- c(ann_colors$AAV, ann_colors$name)
     
     sizesDf <- data.frame( ch = c(rep(14,20), rep(12,20),rep(10,10), 
                                   rep(8,10), rep(7,10), rep(6,10), rep(5,20), rep(4,20)), 
@@ -2408,229 +2455,4 @@ cytoBandCreate <- function(specie = "Mm"){
   # la anotacion aún no está arreglada, de momento por bash
   # curl -L ftp://ftp.ensembl.org/pub/release-100/gff3/homo_sapiens/Homo_sapiens.GRCh38.100.chr.gff3.gz >mm10.gtf.gz
   # zcat mm10.gtf.gz | awk '$3=="gene"{print $1,$4,$5,$9}' | awk 'BEGIN{OFS="\t"}{split($4,a,";");print a[1],$1,$2,$3}' | sed 's/ID=gene://g' >Mm_annot.txt
-}
-# customVisNet #######################################
-customVisNet <- function( enrich, kggDT, nTerm = NULL, up = NULL, down = NULL ){
-    require(visNetwork)
-    require(scales)
-    enrich$genes <- kggDT$genes
-    enrich <- enrich %>% arrange(P.DE)
-    enrich <- enrich[nTerm, ]
-    enrich$genes <- gsub(",", ";", enrich$genes)
-    enrich$genes <- gsub(" ", "", enrich$genes)
-    if( dim(enrich)[2]==8 ){
-        names(enrich) <- c("Term","Ont","N","DE","P.DE","id","genes","level")
-    } else if(dim(enrich)[2]==6){
-        names(enrich) <- c("Term","N","DE","P.DE","id","genes")
-    }
-    edges <- separate_rows(enrich, Term, genes, sep=";")
-    if( dim(enrich)[2]==8 ){
-        edgesf <- edges[, c(1, 7)]
-        edges <- edges %>% dplyr::select(-Ont)    
-    } else if(dim(enrich)[2]==6){
-        edgesf <- edges[, c(1, 6)]
-    }
-    names(edgesf) <- c("from", "to")
-    edgesf$to <- gsub(" ", "", edgesf$to)
-    nd1 <- edges[, 1:5]
-    nd1$P.DE <- nd1$P.DE
-    nd2 <- as.data.frame( 
-    cbind( Term = edges$genes, N = NA, DE = NA, P.DE = NA, id = NA))
-    nd2$Term <- gsub(" ", "", nd2$Term)
-    nd2$P.DE <- NA
-    nd2$id <- nd2$Term
-    nd3 <- rbind(nd1, nd2)
-    nd3 <- dplyr::distinct(nd3)
-        
-    nd3$title <- paste0( nd3$id, "<br>", "pval: ",
-                         formatC(nd3$P.DE, format = "e", digits = 3),"<br>",
-                         "DE: ", nd3$DE )
-    nd3$DE <- ifelse( is.na(nd3$DE), 
-                      min( as.numeric( nd3$DE[ !is.na( nd3$DE ) ] ) ),
-                      nd3$DE )
-    nd3$title <- gsub("<br>pval:   NA<br>DE: NA", "", nd3$title)
-        
-    pvalCol <- rescale(nd3$P.DE, to = c(0, 1))
-    colores <- scales::seq_gradient_pal("red", "blue")(pvalCol)
-    colores <- ifelse(is.na(colores), "#bbceed", colores)
-        
-    nodesf <- data.frame( id = nd3$Term, label = nd3$Term, group = 1,
-            value = nd3$DE, color = colores, shadow = F, title = nd3$title,
-            stringsAsFactors = F )
-    if(!is.null(up) ){
-      genesUp <- which(nodesf$id %in% up)
-      nodesf$color[genesUp] <- "#ffa200"
-      }
-    if(!is.null(down)){
-      genesDown <- which(nodesf$id %in% down)
-      nodesf$color[genesDown] <- "#91ebff"
-      }
-    return(list(nodes = nodesf, edges = edgesf))
-} 
-# GoBarplot ########################
-goBarplot <- function(enrichGO=NULL, resGO=NULL, genes=NULL,
-                      category=NULL, nrows=NULL ){
-    require(GOplot)
-    go <- enrichGO
-    go <- go[ go$Ont==category, ]
-    if(is.null(nrows) | length(nrows)<2 ){
-        totalRows <- min(90, dim(go)[1] )
-        go <- go[ seq_len(totalRows), ]
-    } else{
-        go <- go[nrows, ]
-        }
-    res <- resGO
-    go2 <- go %>% group_by(Ont) %>% as.data.frame()
-    goDT <- go2DT(go2, genes)
-    # preparar tabla GO
-    go2$genes <- goDT$genes
-    go2 <- go2 %>% dplyr::select(Ont,go_id,Term,genes, P.DE)
-    names(go2) <- c("Category","ID", "Term", "Genes", "adj_pval")
-    #preparar tabla genelist
-    names(res)
-    res2 <- res %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
-    names(res2) <- c("ID","logFC","adj.P.Val")
-    # crear objeto circ
-    circ <- circle_dat(go2, res2)
-    GOBar(circ)
-}
-# data2circle ##############################
-data2circle <- function(go=NULL, res=NULL, genes=NULL){
-  go2 <- go %>% group_by(Ont) %>% as.data.frame()
-  goDT <- go2DT(go2, genes)
-  # preparar tabla GO
-  go2$genes <- goDT$genes
-  go2 <- go2 %>% dplyr::select(Ont,go_id,Term,genes, P.DE)
-  names(go2) <- c("Category","ID", "Term", "Genes", "adj_pval")
-  #preparar tabla genelist
-  names(res)
-  res2 <- res %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
-  names(res2) <- c("ID","logFC","adj.P.Val")
-  # crear objeto circ
-  require(GOplot)
-  circ <- circle_dat(go2, res2)
-  return(circ)
-}
-
-# GO circle ################################
-circle <- function (data, title, nsub, rad1, rad2, table.legend = F, zsc.col, 
-          lfc.col, label.size, label.fontface) {
-    require(GOplot)
-    xmax <- y1 <- zscore <- y2 <- ID <- logx <- logy2 <- logy <- logFC <- NULL
-    if (missing(title))
-        title <- ""
-    if (missing(nsub))
-        if (dim(data)[1] > 10)
-            nsub <- 10
-        else
-            nsub <- dim(data)[1]
-        if (missing(rad1))
-            rad1 <- 2
-        if (missing(rad2))
-            rad2 <- 3
-        if (missing(zsc.col))
-            zsc.col <- c("red", "white", "blue")
-        if (missing(lfc.col))
-            lfc.col <- c("cornflowerblue", "firebrick1")
-        else
-            lfc.col <- rev(lfc.col)
-        if (missing(label.size))
-            label.size = 5
-        if (missing(label.fontface))
-            label.fontface = "bold"
-        data$adj_pval <- -log(data$adj_pval, 10)
-        suby <- data[!duplicated(data$term),]
-        if (is.numeric(nsub) == T) {
-            suby <- suby[1:nsub,]
-        }
-        else {
-            if (strsplit(nsub[1], ":")[[1]][1] == "GO") {
-                suby <- suby[suby$ID %in% nsub,]
-            }
-            else {
-                suby <- suby[suby$term %in% nsub,]
-            }
-            nsub <- length(nsub)
-        }
-        N <- dim(suby)[1]
-        r_pval <- round(range(suby$adj_pval), 0) + c(-2, 2)
-        ymax <- c()
-        for (i in 1:length(suby$adj_pval)) {
-            val <- (suby$adj_pval[i] - r_pval[1]) / (r_pval[2] - r_pval[1])
-            ymax <- c(ymax, val)
-        }
-        df <- data.frame(x = seq(0, 10 - (10 / N), length = N), 
-                         xmax = rep(10 / N -0.2, N),
-                         y1 = rep(rad1, N), y2 = rep(rad2, N),
-                         ymax = ymax, zscore = suby$zscore, ID = suby$ID)
-        scount <- data[!duplicated(data$term), which(colnames(data) == "count")][1:nsub]
-        idx_term <- which(!duplicated(data$term) == T)
-        xm <- c()
-        logs <- c()
-        for (sc in 1:length(scount)) {
-            idx <- c(idx_term[sc], idx_term[sc] + scount[sc] - 1)
-            val <- stats::runif(scount[sc], df$x[sc] + 0.06, (df$x[sc] + df$xmax[sc] - 0.06))
-            xm <- c(xm, val)
-            r_logFC <- round(range(data$logFC[idx[1]:idx[2]]), 0) + c(-1, 1)
-            for (lfc in idx[1]:idx[2]) {
-                val <- (data$logFC[lfc] - r_logFC[1]) / (r_logFC[2] - r_logFC[1])
-                logs <- c(logs, val)
-            }
-        }
-        cols <- c()
-        for (ys in 1:length(logs))
-            cols <- c(cols, ifelse(data$logFC[ys] > 0, "upregulated", "downregulated"))
-        dfp <- data.frame( logx = xm, 
-                           logy = logs,
-                           logFC = factor(cols),
-                           logy2 = rep(rad2, length(logs)))
-        c <- ggplot() + 
-          geom_rect( data = df, 
-                     aes( xmin = x, xmax = x + xmax, ymin = y1,
-                          ymax = y1 + ymax, fill = zscore), colour = "black") +
-            geom_rect(data = df, 
-                      aes( xmin = x, xmax = x + xmax, ymin = y2, ymax = y2 + 1),
-                      fill = "gray70") + 
-          geom_rect( data = df, 
-                     aes( xmin = x, xmax = x + xmax, ymin = y2 + 0.5, ymax = y2 + 0.5 ),
-                          colour = "white" ) + 
-          geom_rect( data = df,
-                          aes(xmin = x, xmax = x + xmax, ymin = y2 + 0.25, ymax = y2 + 0.25),
-                          colour = "white") + 
-          geom_rect(data = df,
-                    aes( xmin = x, xmax = x + xmax, ymin = y2 + 0.75, ymax = y2 + 0.75),
-                          colour = "white" ) +
-          geom_text(data = df, 
-                    aes(x = x + (xmax/2), y = y2 + 1.3, label = ID, 
-                        angle = 360 - (x = x + (xmax/2))/(10/360)),
-                    size = label.size, fontface = label.fontface) +
-          coord_polar() + labs(title = title) + 
-          ylim(1, rad2 + 1.6) + xlim(0, 10) + 
-          GOplot:::theme_blank + 
-          scale_fill_gradient2("z-score", space = "Lab", low = zsc.col[3],
-                               mid = zsc.col[2], high = zsc.col[1], 
-                               guide = guide_colourbar(title.position = "top", title.hjust = 0.5),
-                               breaks = c(min(df$zscore), max(df$zscore)),
-                               labels = c("decreasing", "increasing")) +
-          theme( legend.position = "bottom", 
-                 legend.background = element_rect(fill = "transparent"),
-                 legend.box = "horizontal", legend.direction = "horizontal") +
-            geom_point( data = dfp,
-                        aes(x = logx, y = logy2 + logy),
-                        pch = 21, fill = "transparent", colour = "black", size = 2)+
-          geom_point(data = dfp, 
-                     aes(x = logx, y = logy2 + logy, colour = logFC), size = 2.0) +
-            scale_colour_manual(values = lfc.col, 
-                                guide = guide_legend(title.position = "top", title.hjust = 0.5))
-        if (table.legend) {
-            table <- GOplot:::draw_table(suby)
-            graphics::par(mar = c(0.1, 0.1, 0.1, 0.1))
-            grid.arrange(c, table, ncol = 2)
-        }
-        else {
-            c + theme(
-                plot.background = element_rect(fill = "white"),
-                panel.background = element_rect(fill = "white")
-            )
-        }
 }

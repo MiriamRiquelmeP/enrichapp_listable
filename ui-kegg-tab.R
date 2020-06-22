@@ -74,14 +74,23 @@ fluidPage(
                                  ))
                                  ), #cordplot
                         tabPanel(title = "Dotplot",
-                                 plotlyOutput("keggDotUp")
+                                 plotOutput("keggDotUp")
                                  ), # dotplot
                         tabPanel(title = "Heatmap",
                                  plotlyOutput("heatmapKeggUp", height = "600px")
                                  ), # heatmap
                         tabPanel(title = "Netplot",
-                                 plotlyOutput("cnetKeggUp")
-                                 ) # cnetplot
+                                 column(width = 1,
+                                        switchInput(
+                                            size = "mini",
+                                            inputId = "keggNet_switch",
+                                            offLabel = "Static",
+                                            onLabel = "Interactive")
+                                        ),
+                                 column(width = 11,
+                                        uiOutput("keggNet")
+                                        )
+                                  ) #visnetup
                         )
                     )
             )

@@ -31,6 +31,8 @@ library(rglwidget)
 library(scales)
 library(stringr)
 library(shinybusy)
+library(visNetwork)
+source("global.R")
 source("utils.R")
 options(shiny.maxRequestSize = 3000*1024^2)
 
@@ -170,19 +172,19 @@ ui <- dashboardPage(title="Rnaseq viewer and report",
 ########################################## SERVER #################################################
 server <- function(input, output, session) {
   
-  observeEvent(input$aboutButton, {
-        shinyalert("Enrich app 2020", HTML("Authors:<br>
-    Miriam Riquelme Pérez 
-    <a href='https://www.linkedin.com/in/miriam-riquelme-perez/' target='_blank'> 
-    <img src='linkedin_little.svg'> </a> <a href='mailto:miriam.riquelmep@gmail.com'>
-    <img src='email.svg'></a><br>
-    Fernando Pérez Sanz 
-    <a href='https://www.linkedin.com/in/fernandoperez72/' target='_blank'> 
-    <img src='linkedin_little.svg'> 
-    </a> <a href='mailto:fernando.perez@ffis.es'> <img src='email.svg'></a><br>
-    For any suggestion or bug, please contact us"),
-               imageUrl = "dna-svg-small-13.gif", 
-               imageWidth = 200, imageHeight = 100, html=TRUE)})
+    observeEvent(input$aboutButton, {
+          shinyalert("Enrich app 2020", HTML("Authors:<br>
+      Miriam Riquelme Pérez 
+      <a href='https://www.linkedin.com/in/miriam-riquelme-perez/' target='_blank'> 
+      <img src='linkedin_little.svg'> </a> <a href='mailto:miriam.riquelmep@gmail.com'>
+      <img src='email.svg'></a><br>
+      Fernando Pérez Sanz 
+      <a href='https://www.linkedin.com/in/fernandoperez72/' target='_blank'> 
+      <img src='linkedin_little.svg'> 
+      </a> <a href='mailto:fernando.perez@ffis.es'> <img src='email.svg'></a><br>
+      For any suggestion or bug, please contact us"),
+                 imageUrl = "dna-svg-small-13.gif", 
+                 imageWidth = 200, imageHeight = 100, html=TRUE)})
   
   specie <- reactive({input$specie})
   annotation <- reactive({input$annotation})
@@ -390,7 +392,7 @@ server <- function(input, output, session) {
     legendChorplot(kgg$up[rowsUp, ] )
   })
   # KEGG dotplot UP ################### 
-  output$keggDotUp <- renderPlotly({
+  output$keggDotUp <- renderPlot({
     validate(need(kgg$up, "Load file and select to render dotPlot"))
     validate(need(rowsUp(), "Select the paths of interest to render DotPlot"))
     rowsUp <- rowsUp()
@@ -404,12 +406,31 @@ server <- function(input, output, session) {
     validate(need(kggDT$up, ""))
     heatmapKegg(kggDT$up, rowsUp())
   })
-  # KEGG cnet Up #################
-  output$cnetKeggUp <- renderPlotly({
+ 
+# KEGG cnet Up #################
+   output$keggNet <- renderUI({
+    if(!isTRUE( input$keggNet_switch ) ){
+      plotOutput("cnetKegg", height = "600px")
+    } else{
+      visNetworkOutput("visnetKegg", height = "600px")
+    }
+  })
+  output$cnetKegg <- renderPlot({
     validate(need(kgg$up, "Load file and select to render Net Plot"))
     validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
-    customCnetKegg(kgg$up, rowsUp())
+    customCnetKegg(kgg$up, rowsUp(), genesUp = data$df, genesDown = NULL)
   })
+  output$visnetKegg <- renderVisNetwork({
+    validate(need(kgg$up, "Load file and select to render Net Plot"))
+    validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
+    validate(need(kggDT$up, ""))
+    visData <- customVisNet(kgg$up, nTerm=rowsUp(), kggDT$up,
+                             up = data$genesUp$SYMBOL, down = NULL )
+    visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
+    visOptions(highlightNearest = list(enabled=TRUE, hover=TRUE),
+                nodesIdSelection = TRUE)
+  })
+  
  
  # variable GO ###################################
     bprowsup <- reactive({input$tableBP_rows_selected})
@@ -558,8 +579,7 @@ server <- function(input, output, session) {
    
   # GSEA table ##########################
   output$gseaTable <- renderDataTable({
-    validate(need(res$sh, "Load file to render table"))
-    gsea$gsea <- gseaKegg(res$sh, specie() )
+    validate(need(gsea$gsea, "Load file to render table"))
     mygsea <- gsea$gsea
     if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
         createAlert(session, anchorId = "gsea", title = "Oops!!", 
