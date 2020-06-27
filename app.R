@@ -204,6 +204,7 @@ server <- function(input, output, session) {
   fcRange <- reactiveValues() # min y max fc
   numgenesDE <- reactiveValues(up=NULL, down=NULL)
   genesVolcano <- reactive({input$genesVolcano})
+  genes <- reactiveValues()
   ## Leer data ##########################
   observeEvent(input$geneButton,{
     # comprobaciones listado manual
@@ -280,16 +281,44 @@ server <- function(input, output, session) {
   })
   
   #TODO: Definir qué hacer con los NAs, eliminar, reportar, etc
-  ## Acciones al pulsar enrich Button ################################################
+  ## Pulsar Enrich Button ################################################
   observeEvent(input$enrichButton,{
-    # data$genesUp <- getSigUpregulated(data$df, padj(), logfc()[2], specie() ) 
-    # data$genesDown <- getSigDownregulated(data$df, padj(), logfc()[1], specie() ) 
-    # data$genesall <- rbind(data$genesUp, data$genesDown)
-    kgg$up <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
-    kggDT$up <- kegg2DT(kgg$up, data$df[,c("SYMBOL","ENTREZID") ] )
-    go$up <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
-    goDT$up <- go2DT(enrichdf = go$up, data = data$df[,c("SYMBOL","ENTREZID") ] )
+    if( dim(data$df)[2]==3 ){
+      kgg$all <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
+      kggDT$all <- kegg2DT(kgg$all, data$df[,c("SYMBOL","ENTREZID") ] )
+      go$all <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
+      goDT$all <- go2DT(enrichdf = go$up, data = data$df[,c("SYMBOL","ENTREZID") ] )
+    }
     if( dim(data$df)[2]==5 ){
+      genes$Up <- data$df[data$df$logFC >= logfc()[2] & data$df$pval <= padj(),
+                          c("SYMBOL","ENTREZID")]
+      
+      genes$Down <- data$df[data$df$logFC <= logfc()[1] & data$df$pval <= padj(),
+                          c("SYMBOL","ENTREZID")]
+      
+      genes$all <- rbind(genes$Up, genes$Down)
+      
+      kgg$all <- customKegg(genes$all, species = specie() ) #"Mm"), species.KEGG = "mmu")
+      kggDT$all <- kegg2DT(kgg$all, genes$all)
+      
+      kgg$up <- customKegg(genes$Up, species = specie() ) #"Mm")#, species.KEGG = "mmu")
+      kggDT$up <- kegg2DT(kgg$up, genes$Up)
+      
+      kgg$down <- customKegg(genes$Down, species = specie() ) # "Mm")#, species.KEGG = "mmu")
+      kggDT$down <- kegg2DT(kgg$down, genes$Down)
+      
+      go$all <- customGO(genes$all, species = "Mm")
+      goDT$all <- go2DT(enrichdf = go$all, data = genes$all )
+      
+      go$up <- customGO(genes$Up, species = "Mm")
+      goDT$up <- go2DT(enrichdf = go$up, data = genes$Up )
+      
+      go$down <- customGO(genes$Down, species = "Mm")
+      goDT$down <- go2DT(enrichdf = go$down, data = genes$Down )
+      kgg$up <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
+      kggDT$up <- kegg2DT(kgg$up, data$df[,c("SYMBOL","ENTREZID") ] )
+      go$up <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
+      goDT$up <- go2DT(enrichdf = go$up, data = data$df[,c("SYMBOL","ENTREZID") ] )
       gsea$gsea <- gseaKegg(data$df[, c("ENTREZID","logFC")], specie() )
     }
   })
@@ -596,10 +625,114 @@ output$karyoPlot <- renderPlot({
     krtp(data$df, specie = specie(), pval = padj(), fcdown = logfc()[1],
          fcup = logfc()[2], bg="#46505a", coldown="#4ADBFF" , colup="#f7665c")
 })
+# .......................####
+  # variables KEGG ALL ##########################
+  rowsAll <- reactive({input$tableAll_rows_selected})
+ # KEGG table all #####################################
+  output$tableAll <- DT::renderDT(server=TRUE,{
+    validate(need(kgg$all, "Load file to render table"))
+    names(kggDT$all)[names(kggDT$all) == "DE"] <- "DEG"
+    names(kggDT$all)[names(kggDT$all) == "P.DE"] <- "p-value"
+    tituloTabla <- paste0("Table: Kegg DEG genes")
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "kegg",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "kegg",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(
+      kggDT$all,
+      vars = c("genes"),
+      filter = list(position="top", clear=FALSE),
+      escape = FALSE,
+      opts = list(order = list(list(5, 'asc')),
+        pageLength = 10, white_space = "normal",
+        buttons = customButtons))
+  }) 
+  # KEGG barplot all################
+  output$keggPlot <- renderPlotly ({
+    validate(need(kgg$all, "Load file to render BarPlot"))
+    rowsAll <- rowsAll()
+    if(is.null(rowsAll)){
+        if( dim(kgg$all)[1]<10 ){rowsUp <-  seq_len(nrow(kgg$all)) }
+        else{ rowsAll <-  seq_len(10)  }
+        }
+    plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = c(input$allColor))
+  })
+  # KEGG chordiag plot all ###############
+  output$keggChord <- renderChorddiag({
+    validate(need(kgg$all, "Load file to render ChordPlot"))
+    rowsAll<- rowsAll()
+    if(is.null(rowsAll)){
+        if( dim(kgg$all)[1]<10 ){rowsAll <-  seq_len(nrow(kgg$all)) }
+        else{ rowsAll <-  seq_len(10)  }
+        }
+    chordPlot(kgg$all[rowsAll, ], nRows = length(rowsAll), orderby = "P.DE")
+  })
+ output$legendChorAll <- renderPlot({
+    validate(need(kgg$all, "Load file to render ChordPlot"))
+    rowsAll <- rowsAll()
+    if(is.null(rowsAll)){
+        if (dim(kgg$all)[1] < 10) {rowsAll <-  seq_len(nrow(kgg$all))}
+        else{rowsAll <-  seq_len(10)}
+        
+        }
+    legendChorplot(kgg$all[rowsAll, ] )
+  })
+  # KEGG dotplot UP ################### 
+  output$keggDotAll <- renderPlot({
+    validate(need(kgg$all, "Load file and select to render dotPlot"))
+    validate(need(rowsAll(), "Select the paths of interest to render DotPlot"))
+    rowsAll <- rowsAll()
+    if(is.null(rowsAll)){rowsAll <- c(1:20)}
+    dotPlotkegg(kgg$all[rowsAll,], n = length(rowsAll))
+  })
+  # KEGG heatmap All #################
+  output$heatmapKeggAll <- renderPlotly({
+    validate(need(kgg$all, "Load file and select to render Heatmap"))
+    validate(need(rowsAll(), "Select the paths of interest to render HeatMap"))
+    validate(need(kggDT$all, ""))
+    heatmapKegg(kggDT$all, rowsAll())
+  })
+ 
+# KEGG cnet All #################
+  output$legend <- renderPlot({
+    validate(need(kgg$all, "Load file and select to render Net Plot"))
+    validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
+    validate(need(kggDT$all, ""))
+    visnetLegend(kggDT = kggDT$all , rows = rowsAll() )
+  })
+   output$keggNet <- renderUI({
+    if(!isTRUE( input$keggNet_switch ) ){
+      plotOutput("cnetKegg", height = "600px")
+    } else{
+      visNetworkOutput("visnetKegg", height = "600px")
+    }
+  })
+  output$cnetKegg <- renderPlot({
+    validate(need(kgg$all, "Load file and select to render Net Plot"))
+    validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
+    customCnetKegg(kgg$all, rowsAll(), genesAll = data$df, genesDown = NULL)
+  })
+  output$visnetKegg <- renderVisNetwork({
+    validate(need(kgg$all, "Load file and select to render Net Plot"))
+    validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
+    validate(need(kggDT$all, ""))
+    visData <- customVisNet(kgg$all, nTerm=rowsAll(), kggDT$all,
+                             up = genes$Up$SYMBOL, down = genes$Down$SYMBOL )
+    visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
+    visOptions(highlightNearest = list(enabled=TRUE, hover=TRUE),
+                nodesIdSelection = TRUE)
+  })
+
 # ....................... ####
-  # variables KEGG ##########################
+  # variables KEGG UP ##########################
   rowsUp <- reactive({input$table_rows_selected})
- # KEGG table up#####################################
+ # KEGG table up #####################################
   output$table <- DT::renderDT(server=TRUE,{
     validate(need(kgg$up, "Load file to render table"))
     names(kggDT$up)[names(kggDT$up) == "DE"] <- "DEG"
@@ -694,12 +827,114 @@ output$karyoPlot <- renderPlot({
     validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$up, ""))
     visData <- customVisNet(kgg$up, nTerm=rowsUp(), kggDT$up,
-                             up = data$df$SYMBOL, down = NULL )
+                             up = genes$Up$SYMBOL, down = NULL )
     visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
     visOptions(highlightNearest = list(enabled=TRUE, hover=TRUE),
                 nodesIdSelection = TRUE)
   })
-  
+  # ....................... ####
+  # variables KEGG Down ##########################
+  rowsDown <- reactive({input$table_rows_selected})
+ # KEGG table down #####################################
+  output$table <- DT::renderDT(server=TRUE,{
+    validate(need(kgg$down, "Load file to render table"))
+    names(kggDT$down)[names(kggDT$down) == "DE"] <- "DEG"
+    names(kggDT$down)[names(kggDT$down) == "P.DE"] <- "p-value"
+    tituloTabla <- paste0("Table: Kegg DEG genes")
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "kegg",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "kegg",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(
+      kggDT$down,
+      vars = c("genes"),
+      filter = list(position="top", clear=FALSE),
+      escape = FALSE,
+      opts = list(order = list(list(5, 'asc')),
+        pageLength = 10, white_space = "normal",
+        buttons = customButtons))
+  }) 
+  # KEGG barplot down################
+  output$keggPlot <- renderPlotly ({
+    validate(need(kgg$down, "Load file to render BarPlot"))
+    rowsDown <- rowsDown()
+    if(is.null(rowsDown)){
+        if( dim(kgg$down)[1]<10 ){rowsDown <-  seq_len(nrow(kgg$down)) }
+        else{ rowsDown <-  seq_len(10)  }
+        }
+    plotKegg(enrichdf = kgg$down[rowsDown,], nrows = length(rowsDown), colors = c(input$downColor))
+  })
+  # KEGG chordiag plot down ###############
+  output$keggChord <- renderChorddiag({
+    validate(need(kgg$down, "Load file to render ChordPlot"))
+    rowsDown<- rowsDown()
+    if(is.null(rowsDown)){
+        if( dim(kgg$down)[1]<10 ){rowsDown <-  seq_len(nrow(kgg$down)) }
+        else{ rowsDown <-  seq_len(10)  }
+        }
+    chordPlot(kgg$down[rowsDown, ], nRows = length(rowsDown), orderby = "P.DE")
+  })
+ output$legendChorDown <- renderPlot({
+    validate(need(kgg$down, "Load file to render ChordPlot"))
+    rowsDown <- rowsDown()
+    if(is.null(rowsDown)){
+        if (dim(kgg$down)[1] < 10) {rowsDown <-  seq_len(nrow(kgg$down))}
+        else{rowsDown <-  seq_len(10)}
+        
+        }
+    legendChorplot(kgg$down[rowsDown, ] )
+  })
+  # KEGG dotplot UP ################### 
+  output$keggDotDown <- renderPlot({
+    validate(need(kgg$down, "Load file and select to render dotPlot"))
+    validate(need(rowsDown(), "Select the paths of interest to render DotPlot"))
+    rowsDown <- rowsDown()
+    if(is.null(rowsDown)){rowsDown <- c(1:20)}
+    dotPlotkegg(kgg$down[rowsDown,], n = length(rowsDown))
+  })
+  # KEGG heatmap Down #################
+  output$heatmapKeggDown <- renderPlotly({
+    validate(need(kgg$down, "Load file and select to render Heatmap"))
+    validate(need(rowsDown(), "Select the paths of interest to render HeatMap"))
+    validate(need(kggDT$down, ""))
+    heatmapKegg(kggDT$down, rowsDown())
+  })
+ 
+# KEGG cnet Down #################
+  output$legend <- renderPlot({
+    validate(need(kgg$down, "Load file and select to render Net Plot"))
+    validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
+    validate(need(kggDT$down, ""))
+    visnetLegend(kggDT = kggDT$down , rows = rowsDown() )
+  })
+   output$keggNet <- renderUI({
+    if(!isTRUE( input$keggNet_switch ) ){
+      plotOutput("cnetKegg", height = "600px")
+    } else{
+      visNetworkOutput("visnetKegg", height = "600px")
+    }
+  })
+  output$cnetKegg <- renderPlot({
+    validate(need(kgg$down, "Load file and select to render Net Plot"))
+    validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
+    customCnetKegg(kgg$down, rowsDown(), genesDown = data$df, genesDown = NULL)
+  })
+  output$visnetKegg <- renderVisNetwork({
+    validate(need(kgg$down, "Load file and select to render Net Plot"))
+    validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
+    validate(need(kggDT$down, ""))
+    visData <- customVisNet(kgg$down, nTerm=rowsDown(), kggDT$down,
+                             down = genes$Down$SYMBOL, up = NULL )
+    visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
+    visOptions(highlightNearest = list(enabled=TRUE, hover=TRUE),
+                nodesIdSelection = TRUE)
+  })
  # ....................... ####
  # variable GO ###################################
     bprowsup <- reactive({input$tableBP_rows_selected})
