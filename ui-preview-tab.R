@@ -38,9 +38,17 @@ fluidPage(
             solidHeader = FALSE,
             status = "primary",
             width = NULL,
-            uiOutput("logfc"),
+            switchInput(inputId = "fc_switch",
+                        offLabel = "log2FC",
+                        onLabel = "FC",
+                        size = "mini"
+                        ),
             tags$br(),
-            uiOutput("padj")
+            uiOutput("fc_control"),
+            tags$br(),
+            uiOutput("padj"),
+            tags$br(),
+            actionButton("applyParam", label = "Click to apply values")
         )
     ),
     column(
@@ -101,200 +109,14 @@ fluidPage(
         ) #tabbox
     ) #column
     ), 
-             fluidRow( column(width = 12,
-                 tabBox(width = 12,
-                     tabPanel(
-                         title = "Samples information (Coldata)",
-                         DTOutput("samples")
-                     ),
-                     tabPanel(
-                         title = "Statistical expression values",
-                         DTOutput("preview")
-                     )
-                 )
-             ) ), # fin column y tabbox
-    
-             fluidRow(column(width = 3,
-               circleButton(
-               inputId = "information2",
-               icon = icon("info"),
-               size = "xs",
-               status = "primary"
-             ),
-             bsTooltip(
-               "information2",
-               paste0("Choose here the conditions from your Coldata that will ", 
-               "help to represent the data graphically ", 
-               "and explore all the variables properly."),
-               trigger = "hover",
-               placement = "right"
-             ),
-                box(
-                    title = "Conditions and Variables",
-                    width = NULL,
-                    uiOutput("sampleGroup"),
-                    uiOutput("colorPalettes"),
-                    uiOutput("samplesName"))
-             ),
-             column(width = 9,
-                             tabBox( width = 12,
-                                 tabPanel(
-                                     title = "PCA plot",
-                                     circleButton(
-                                       inputId = "information3",
-                                       icon = icon("info"),
-                                       size = "xs",
-                                       status = "primary"
-                                     ),
-                                     bsTooltip(
-                                       "information3",
-                                       paste0("Up to two conditions may be accepted for PCA 2D. ", 
-                                       "The first one of them ",
-                                       "will be represented with different colours ",
-                                       "and the second will correspond to the dot shape. ",
-                                       "For PCA 3D only the first one is taken."),
-                                       trigger = "hover",
-                                       placement = "right"
-                                     ),
-                                     tagList(fluidRow(
-                                     column(width=3,
-                                        materialSwitch(inputId = "pca3d", label = "PCA 3D",
-                                                       status = "primary")
-                                            ),
-                                     column(width=9,
-                                        uiOutput("pca3", height = "800px")
-                                        #plotOutput("pca", width = "100%", height = "800px"),
-                                        #rglwidgetOutput("pca3d", width = "100%", height = "800px")
-                                     )
-                                     ))),
-                                                                  tabPanel(
-                                     title = "Box/violin plot",
-                                     circleButton(
-                                            inputId = "infobox",
-                                            icon = icon("info"),
-                                            size = "xs",
-                                            status = "primary"),
-                                          bsTooltip(
-                                            "infobox",
-                                            paste0("Change here the way you want to represent ",
-                                            "the profile of the counts per gene for the normalized samples. ",
-                                            "Only the first condition selected will be taken into ",
-                                            "account to group the samples."),
-                                            trigger = "hover",
-                                            placement = "right"
-                                          ),
-                                     tagList(fluidRow(
-                                     column(width=3,
-                                        materialSwitch(inputId = "boxplotswitch", label = "Violin plot",
-                                                       status = "primary")
-                                            ),
-                                     column(width=9,
-                                        plotlyOutput("boxviolin", width="100%", height = "800px")
-                                     )
-                                     ))),
-                                 tabPanel(title = "Heatmap",
-                                          circleButton(
-                                            inputId = "information4",
-                                            icon = icon("info"),
-                                            size = "xs",
-                                            status = "primary"
-                                          ),
-                                          bsTooltip(
-                                            "information4",
-                                            paste0("Up to two conditions may be accepted for the heatmap. ",
-                                            "Every condition will be represented on top ",
-                                            "of the plot with different colors showing the ",
-                                            "distincts group per sample."),
-                                            trigger = "hover",
-                                            placement = "right"
-                                          ),
-                                          #tagList(
-                                            fluidRow(
-                                            column(
-                                              width = 3,
-                                              sliderInput(
-                                                "numheatmap",
-                                                label = "Select number of genes",
-                                                min = 5,
-                                                max = 120,
-                                                value = 20,
-                                                step = 1
-                                              )
-                                            ),
-                                            column(width = 9,
-                                                   plotlyOutput("heat", height = "800px"))
-                                          )#)
-                                          ),
-                                 tabPanel(
-                                      title = "Cluster",
-                                      plotlyOutput("cluster", width = "100%", height = "800px")
-                                 ),
-                                 tabPanel(title = "Top 6 genes",
-                                          circleButton(
-                                            inputId = "information200",
-                                            icon = icon("info"),
-                                            size = "xs",
-                                            status = "primary"
-                                          ),
-                                          bsTooltip(
-                                            "information200",
-                                            paste0("Only the first condition selected will be ",
-                                                   "taken into account to group the samples."),
-                                            trigger = "hover",
-                                            placement = "right"
-                                          ),
-                                          plotlyOutput("top6", width="100%", height = "800px")),
-                                 tabPanel(title = "Top unique gene",
-                                          circleButton(
-                                            inputId = "information100",
-                                            icon = icon("info"),
-                                            size = "xs",
-                                            status = "primary"
-                                          ),
-                                          bsTooltip(
-                                            "information100",
-                                            paste0("Select the individual gene in which you are interested ",
-                                                   "in exploring the expression. Only the first condition selected will be ",
-                                                   "taken into account to group the samples."),
-                                            trigger = "hover",
-                                            placement = "right"
-                                          ),
-                                          tagList(fluidRow(
-                                            column(
-                                              width = 3,
-                                              textInput("gene", value="", label = "Select the ensembl gene of interest"),
-                                              htmlOutput("top1text")
-                                            ),
-                                            column(width = 9,
-                                                   plotlyOutput("top1", height = "800px"))
-                                          ))),
-                                 tabPanel(title = "KaryoPlot",
-                                          circleButton(
-                                            inputId = "karyoInfo",
-                                            icon = icon("info"),
-                                            size = "xs",
-                                            status = "primary"
-                                          ),
-                                          bsTooltip(
-                                            "karyoInfo",
-                                            paste0("Pon lo que te salga del ornotorrinco "),
-                                            trigger = "hover",
-                                            placement = "right"
-                                          ),
-                                          tagList(
-                                            fluidRow(
-                                              column(width=10, offset=1,
-                                                     plotOutput("karyoPlot", height = "800px") )))
-                                          )
-                                 )
-                             )
-                      ), 
+
+
   fluidRow(
       column(width = 3,
              box( title = "Customize plots",
                   width = NULL,
                 tagList(
-                    tags$p("Volcano & MA plots color scheme"),
+                    tags$p("Volcano plots color scheme"),
              #    spectrumInput(
              #     inputId = "logfcColor",
              #     label = "Pick log FC color:",
@@ -387,16 +209,29 @@ fluidPage(
                 plotOutput("volcano", click = "plot_click1" , width = "100%", height = "600px"),
                 tableOutput("texto1")
             ),
-         tabPanel(
-                title = "MA plot",
-                  plotOutput("MA", click = "plot_click2" , width = "100%", height = "600px"),
-                #tableOutput("texto2")
-            )
+         tabPanel(title = "KaryoPlot",
+                                          circleButton(
+                                            inputId = "karyoInfo",
+                                            icon = icon("info"),
+                                            size = "xs",
+                                            status = "primary"
+                                          ),
+                                          bsTooltip(
+                                            "karyoInfo",
+                                            paste0("Pon lo que te salga del ornitorrinco "),
+                                            trigger = "hover",
+                                            placement = "right"
+                                          ),
+                                          tagList(
+                                            fluidRow(
+                                              column(width=10, offset=1,
+                                                     plotOutput("karyoPlot", height = "800px") )))
+                                          )
  ))),
  fluidRow(column(width = 4, offset = 4,
             strong("Click to compute enrichment"),
             tags$br(),
-            actionButton("runEnrich", "Apply values", width = "100%")
+            actionButton("enrichButton", "Apply values", width = "100%")
              ))
 ) # fin page
 

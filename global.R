@@ -27,9 +27,9 @@ formatData <- function(genelist, specie, annotation){
   if( dim(genelist)[2]==1 ){
     names(genelist)<-ann
   }
-  ## listado doble
-  if( dim(genelist)[2]==2){
-    names(genelist) <- c(ann, "Rank")
+  ## listado triple (gen, logfc, padj)
+  if( dim(genelist)[2]==3){
+    names(genelist) <- c(ann, "log2FC","pval")
   }
 
   if(specie=="Mm"){
@@ -78,8 +78,9 @@ formatData <- function(genelist, specie, annotation){
     annot$ENTREZID <- ENTREZID
     annot <- annot[c("ENSEMBL","SYMBOL","ENTREZID")]
   }
-  if(dim(genelist)[2]==2){
-      annot$rank <- genelist[ ,2]
+  if(dim(genelist)[2]==3){
+      annot$logFC <- genelist[ ,2]
+      annot$pval <- genelist[ ,3]
   }
   return(as.data.frame(annot) )
 }

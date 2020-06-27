@@ -1301,13 +1301,14 @@ gseaKegg <- function(res, specie){
   pathwayDataSet <- readRDS(paste0("./resources/",specie,"/GSEA/keggDataGSEA.Rds"))
   res.sh <- res
   #res.sh <- as.data.frame(lfcShrink(dds, coef=2, type="apeglm", res = results(dds)))
-  res.sh <- res.sh[order(res.sh$log2FoldChange, decreasing = TRUE), ]
-  res.sh$ENSEMBL <- rownames(res.sh)
-  geneRank <- geneIdConverter( res.sh$ENSEMBL)
-  resRank <- left_join(res.sh, geneRank, by=c("ENSEMBL"="ENSEMBL"))
-  resRank <- resRank[!is.na(resRank$ENTREZID), c("ENTREZID","log2FoldChange") ]
-  vectRank <- resRank$log2FoldChange
-  attr(vectRank, "names") <- as.character(resRank$ENTREZID)
+  #res.sh <- res.sh[order(res.sh$rank, decreasing = TRUE), ]
+  res.sh <- res.sh %>% arrange(desc(logFC) )
+  #res.sh$ENSEMBL <- rownames(res.sh)
+  #geneRank <- geneIdConverter( res.sh$ENSEMBL)
+  #resRank <- left_join(res.sh, geneRank, by=c("ENSEMBL"="ENSEMBL"))
+  #resRank <- resRank[!is.na(resRank$ENTREZID), c("ENTREZID","log2FoldChange") ]
+  vectRank <- res.sh$logFC
+  attr(vectRank, "names") <- as.character(res.sh$ENTREZID)
   mygsea <- clusterProfiler::GSEA(vectRank, 
                                   TERM2GENE = pathwayDataSet, 
                                   by="fgsea", pvalueCutoff = 0.1)
@@ -1769,7 +1770,7 @@ CustomVolcano <- function (toptable, lab, x, y, selectLab = NULL, xlim = c(min(t
 MA <- function (data, fdr = 0.05, fcDOWN = -1, fcUP = 1, genenames = NULL, detection_call = NULL, 
           size = NULL, font.label = c(12, "plain", "black"), label.rectangle = FALSE, 
           palette = c("#f7837b", "#1cc3c8", "darkgray"), top = 15, 
-          select.top.method = c("padj", "fc"), main = NULL, xlab = "Log2 mean expression", 
+          select.top.method = c("pval", "fc"), main = NULL, xlab = "Log2 mean expression", 
           ylab = "Log2 fold change", ggtheme = theme_classic(), ...) 
 {
   if (!base::inherits(data, c("matrix", "data.frame", "DataFrame", 
@@ -1785,7 +1786,7 @@ MA <- function (data, fdr = 0.05, fcDOWN = -1, fcUP = 1, genenames = NULL, detec
   else detection_call = rep(1, nrow(data))
   if (is.null(list(...)$legend)) 
     legend <- c(0.12, 0.9)
-  ss <- base::setdiff(c("baseMean", "log2FoldChange", "padj"), 
+  ss <- base::setdiff(c("baseMean", "logFC", "pval"), 
                       colnames(data))
   if (length(ss) > 0) 
     stop("The colnames of data must contain: ", paste(ss, collapse = ", "))
@@ -1794,9 +1795,9 @@ MA <- function (data, fdr = 0.05, fcDOWN = -1, fcUP = 1, genenames = NULL, detec
   else if (length(genenames) != nrow(data)) 
     stop("genenames should be of length nrow(data).")
   sig <- rep(3, nrow(data))
-  sig[which(data$padj <= fdr & data$log2FoldChange < 0 & data$log2FoldChange <= (as.numeric(fcDOWN)) & detection_call == 1)] = 2
-  sig[which(data$padj <= fdr & data$log2FoldChange > 0 & data$log2FoldChange >= (as.numeric(fcUP)) & detection_call == 1)] = 1
-  data <- data.frame(name = genenames, mean = data$baseMean, lfc = data$log2FoldChange, padj = data$padj, sig = sig)
+  sig[which(data$pval <= fdr & data$logFC < 0 & data$logFC <= (as.numeric(fcDOWN)) & detection_call == 1)] = 2
+  sig[which(data$pval <= fdr & data$logFC > 0 & data$logFC >= (as.numeric(fcUP)) & detection_call == 1)] = 1
+  data <- data.frame(name = genenames, mean = data$baseMean, lfc = data$logFC, pval = data$pval, sig = sig)
   . <- NULL
   data$sig <- as.factor(data$sig)
   .lev <- .levels(data$sig) %>% as.numeric()
@@ -1804,13 +1805,13 @@ MA <- function (data, fdr = 0.05, fcDOWN = -1, fcUP = 1, genenames = NULL, detec
   new.levels <- c(paste0("Up: ", sum(sig == 1)), paste0("Down: ", sum(sig == 2)), "NS") %>% .[.lev]
   data$sig <- factor(data$sig, labels = new.levels)
   select.top.method <- match.arg(select.top.method)
-  if (select.top.method == "padj") 
-    data <- data[order(data$padj), ]
+  if (select.top.method == "pval") 
+    data <- data[order(data$pval), ]
   else if (select.top.method == "fc") 
     data <- data[order(abs(data$lfc), decreasing = TRUE), 
                  ]
   labs_data <- stats::na.omit(data)
-  labs_data <- subset(labs_data, padj <= fdr & name != "" & 
+  labs_data <- subset(labs_data, pval <= fdr & name != "" & 
                         (lfc >= fcUP | lfc <=fcDOWN) )
   labs_data <- utils::head(labs_data, top)
   font.label <- ggpubr:::.parse_font(font.label)
@@ -1821,7 +1822,7 @@ MA <- function (data, fdr = 0.05, fcDOWN = -1, fcUP = 1, genenames = NULL, detec
   font.label$face <- ifelse(is.null(font.label$face), "plain", 
                             font.label$face)
   set.seed(42)
-  mean <- lfc <- sig <- name <- padj <- NULL
+  mean <- lfc <- sig <- name <- pval <- NULL
   p <- ggplot(data, aes(x = log2(mean + 1), y = lfc)) + geom_point(aes(color = sig), size = size)
   if (label.rectangle) {
     p <- p + ggrepel::geom_label_repel(data = labs_data, 
@@ -2358,14 +2359,14 @@ krtp <- function(res, specie="Mm", pval, fcdown,
   require(karyoploteR)
   fileAnnot <- paste0("./resources/",specie,"/cytoband/",specie,"_annot.txt")
   annot <- read.table(fileAnnot, header = F, sep = "\t")
-  res2 <- res[ res$padj <pval & (res$log2FoldChange<(fcdown) | res$log2FoldChange>fcup),]
+  res2 <- res[ res$pval <pval & (res$logFC<(fcdown) | res$logFC>fcup),]
   res3 <- as.data.frame(res2)
   res3$genes <- rownames(res3)
   genes <- left_join(annot, res3, by = c("V1"="genes"))
-  sig <- which( !is.na(genes$padj) )
+  sig <- which( !is.na(genes$pval) )
   genes <- genes[sig,]
   A <- data.frame(chr = paste0("chr",genes$V2), start = genes$V3,
-                  end=genes$V4, x = genes$V1, y = genes$log2FoldChange)
+                  end=genes$V4, x = genes$V1, y = genes$logFC)
   genesSig <- toGRanges(A)
   one <- getDefaultPlotParams(2)
   one$ideogramheight <- 300
@@ -2633,4 +2634,20 @@ circle <- function (data, title, nsub, rad1, rad2, table.legend = F, zsc.col,
                 panel.background = element_rect(fill = "white")
             )
         }
+}
+# Leyenda para los cnet interactivos #########
+visnetLegend <- function(kggDT = NULL, rows = NULL){
+      mydf <- data.frame(id = rep(1, 100), sales = 1:100)
+    minVal <- format( min( kggDT$`p-value`[rows] ), scientific = T, digits = 2)
+    maxVal <- format( max( kggDT$`p-value`[rows] ), scientific = T, digits = 2)
+    p <- ggplot(mydf) +
+      geom_tile(aes(x = 1, y=sales, fill = sales), show.legend=FALSE) +
+      scale_x_continuous(limits=c(0.5,1.5),breaks=1)+
+      scale_y_continuous(breaks = c(1,100), 
+                         labels = c(minVal,maxVal), position = "right")+
+      scale_fill_gradient(high = "blue", low = "red") +
+      theme_void() +
+      theme(axis.text.y.right = element_text(hjust = 0, size = 12, colour = "#cdcdcd"),
+            plot.background = element_rect(fill= "#2d3741", color = NA ) )
+    return(p)
 }

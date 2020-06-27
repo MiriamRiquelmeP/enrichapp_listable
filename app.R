@@ -59,7 +59,7 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                         label = "Select specie",
                                         choices = list( "Human" = "Hs", "Mouse" = "Mm", "Ratus" = "Rn"),
                                         options = list(title = "specie"),
-                                        selected = NULL
+                                        selected = "Mm"
                                     ) 
                                 ),
                                 menuItem(
@@ -68,9 +68,10 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                     label = "Select annotation gene",
                                     choices = list("Ensembl" = "ensg", "Symbol"="symbol"),
                                     options = list(title="annotation"),
-                                    selected = NULL
+                                    selected = "ensg"
                                   )
                                 ),
+                                sidebarMenu("", sidebarMenuOutput("prevw")),
                                 sidebarMenu("", sidebarMenuOutput("menuKegg")),
                                 sidebarMenu("", sidebarMenuOutput("menuGO")),
                                 sidebarMenu("", sidebarMenuOutput("menuGSEA"))
@@ -186,9 +187,10 @@ server <- function(input, output, session) {
                  imageUrl = "dna-svg-small-13.gif", 
                  imageWidth = 200, imageHeight = 100, html=TRUE)})
   
+  # variables reactivas ######
   specie <- reactive({input$specie})
   annotation <- reactive({input$annotation})
-  validatedGene<- reactiveValues(list=NULL)
+  validatedGene <- reactiveValues(list=NULL)
   data <- reactiveValues(df=NULL)
   kgg <- reactiveValues(all=NULL)
   kggDT <- reactiveValues(all=NULL)
@@ -196,13 +198,20 @@ server <- function(input, output, session) {
   goDT <- reactiveValues(all=NULL)
   gene <- reactiveValues(lost=NULL)
   gsea <- reactiveValues(gsea=NULL)
-  ## Leer datos ##########################
+  df3cols <- reactiveValues(TF=FALSE)
+  fc_switch <- reactive({input$fc_switch})
+  logfcRange <- reactiveValues() # min y max logfc
+  fcRange <- reactiveValues() # min y max fc
+  numgenesDE <- reactiveValues(up=NULL, down=NULL)
+  genesVolcano <- reactive({input$genesVolcano})
+  ## Leer data ##########################
   observeEvent(input$geneButton,{
     # comprobaciones listado manual
     if( !is.null(input$geneList)){
       if(input$geneList!="" ){
         if (annotation() == "ensg") {
-          if (length(which(grepl("^ENS", input$geneList, ignore.case = TRUE))) < length(input$geneList)  ) {
+          if (length(which(grepl("^ENS", input$geneList, ignore.case = TRUE))) <
+              length(input$geneList)  ) {
             shinyalert("Oops!!", "One or more genes are not 
             in ENSEMBL format",
                        type = "error")
@@ -235,7 +244,7 @@ server <- function(input, output, session) {
       if(input$geneFile$datapath != "" ){
         validatedGene$list <- as.data.frame( readxl::read_xlsx(input$geneFile$datapath, sheet = 1))
         if (annotation() == "ensg") {
-          if (length(which(grepl("^ENS", validatedGene$list[,1], ignore.case = TRUE))) < nrow(validatedGene$list) ) {
+          if(length(which(grepl("^ENS", validatedGene$list[,1], ignore.case = TRUE))) < nrow(validatedGene$list) ) {
             shinyalert("Oops!!", "One or more genes are not 
             in ENSEMBL format",
                        type = "error")
@@ -261,24 +270,48 @@ server <- function(input, output, session) {
         }
       }
     }
+    if( dim(data$df)[2]==5 ){
+      df3cols$TF <- TRUE
+    }
+    logfcRange$min <- min(data$df$logFC)
+    logfcRange$max <- max(data$df$logFC)
+    fcRange$min <- ifelse(logfcRange$min<0, -(2^abs(logfcRange$min)), 2^abs(logfcRange$min))
+    fcRange$max <- ifelse(logfcRange$max<0, -(2^abs(logfcRange$max)), 2^abs(logfcRange$max))
   })
+  
   #TODO: Definir qué hacer con los NAs, eliminar, reportar, etc
   ## Acciones al pulsar enrich Button ################################################
   observeEvent(input$enrichButton,{
+    # data$genesUp <- getSigUpregulated(data$df, padj(), logfc()[2], specie() ) 
+    # data$genesDown <- getSigDownregulated(data$df, padj(), logfc()[1], specie() ) 
+    # data$genesall <- rbind(data$genesUp, data$genesDown)
     kgg$up <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
     kggDT$up <- kegg2DT(kgg$up, data$df[,c("SYMBOL","ENTREZID") ] )
     go$up <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
     goDT$up <- go2DT(enrichdf = go$up, data = data$df[,c("SYMBOL","ENTREZID") ] )
-    if( dim(data$df)[2]==4 ){
-      gsea$gsea <- gseaKegg(data$df[, c("ENTREZID","rank")], specie() )
+    if( dim(data$df)[2]==5 ){
+      gsea$gsea <- gseaKegg(data$df[, c("ENTREZID","logFC")], specie() )
     }
   })
+  
+  ## Cosas a renderizar en preview si dflist 3 columns ##################
+  ## sidebar menu preview ###################
+  output$prevw <- renderMenu({
+      validate(need(isTRUE(df3cols$TF), ""))
+      sidebarMenu(
+          menuItem(
+              "Preview",
+              tabName = "preview",
+              icon = icon("chart-bar")
+          )
+          )
+          })
   
   ## Gene List ####################
   output$geneList <- renderUI({
     validate(need(specie(),""))
     validate(need(annotation(),""))
-    textAreaInput(inputId = "geneList", label = "Input gene list ...", resize = "vertical")
+    textAreaInput(inputId = "geneList", label = "Input simple gene list ...", resize = "vertical")
   })
   
   ## Gene File #####################
@@ -296,6 +329,7 @@ server <- function(input, output, session) {
   ## boton enrich #########################
   output$enrichbutton <- renderUI({
     validate(need(data$df, ""))
+    validate(need(!isTRUE(df3cols$TF), ""))
     actionBttn("enrichButton", label = "Click to run enrichment", size="lg", color="default", icon = icon("images"))
   })
   
@@ -311,6 +345,32 @@ server <- function(input, output, session) {
           )
           )
           })
+  
+    # Acciones al pulsar applyButton ################
+  padjVal <- reactiveValues(val=0.05)
+  fcVal <- reactiveValues( val=c(-1.5, 1.5) )
+  logfcVal <- reactiveValues(val=c(-0.5,0.5))
+  padj <- reactive({padjVal$val})
+  logfc <- reactive({logfcVal$val})
+  fc <- reactive({fcVal$val})
+  
+  observeEvent(input$applyParam,{
+      padjVal$val <- input$padj
+      if( isTRUE( fc_switch()) ){
+        logfcTmp <- vector()
+        fcVal$val <-input$fc
+        logfcTmp[1] <- ifelse(fc()[1]<0, -log2(abs(fc()[1])), log2(abs(fc()[1])) )
+        logfcTmp[2] <- ifelse(fc()[2]<0, -log2(abs(fc()[2])), log2(abs(fc()[2])) )
+      } else {
+        logfcTmp <- input$logfc
+      }
+      if(logfcTmp[1]==logfcTmp[2]){
+          logfcVal$val <- c(0,0)
+          }else{
+            logfcVal$val <- logfcTmp
+          }
+    })
+  
       
   ## side menubar GO #########################
       output$menuGO <- renderMenu({
@@ -332,10 +392,213 @@ server <- function(input, output, session) {
                    icon = icon("chart-line"))
         )
       })
+    # ui selector de genes para volcano plot #######################
+  output$geneSelector <- renderUI({
+    validate(need(data$df, ""))
+    genes <- as.character(data$df$GeneName_Symbol[ which(!( data$df$pval>padj() &
+                                                             data$df$logFC>logfc()[1] &
+                                                             data$df$logFC<logfc()[2] )) ])
+    selectInput("genesVolcano", label="Select gene[s] to label",
+                choices = genes,
+                multiple = TRUE)
+  })
   
+  # Deslizador fc/logfc según switch #################
+  output$fc_control <- renderUI({
+    if(isTRUE(fc_switch())){
+      validate(need(data$df, ""))
+      valmin <- ifelse(input$logfc[1]<0, -2^(abs(input$logfc[1] )), 2^(abs(input$logfc[1])) )
+      valmax <- ifelse(input$logfc[2]<0, -2^(abs(input$logfc[2] )), 2^(abs(input$logfc[2])) )
+      sliderInput("fc", label = "Select FC range to remove (keeps the tails)",
+                  min=round(fcRange$min,3), max=round(fcRange$max, 3),
+                  value = c(valmin, valmax), step = 0.1 )
+    } else {
+      validate(need(data$df, ""))
+      validate(need(fc(), ""))
+        if(is.null(input$fc[1]) ){
+          valmin = -0.5
+          valmax = 0.5
+        } else{
+          valmin <- ifelse(input$fc[1]<0, -log2(abs(input$fc[1] )), log2(abs(input$fc[1])) )
+          valmax <- ifelse(input$fc[2]<0, -log2(abs(input$fc[2] )), log2(abs(input$fc[2])) )
+      }
+      sliderInput("logfc", label = "Select logFC range to remove (keeps the tails)",
+                min=round(logfcRange$min,3), max=round(logfcRange$max, 3),
+                value = c(valmin, valmax), 
+                step = 0.1 )
+    }
+  })
+    # ui selector padj #################################
+  output$padj <- renderUI({
+    validate(need(data$df,""))
+    sliderInput("padj", label = "Select p-adjusted threshold", min = 0, max=0.2,
+                value=0.05, step = 0.005 )
+  })
+  
+    # infoboxes ###############################
+  output$allbox <- renderInfoBox({
+      validate(need(data$df, ""))
+      validate(need(padj(), ""))
+      validate(need(logfc(), ""))
+      numall <- nrow( data$df[ ((data$df$logFC >= logfc()[2] |
+                                    data$df$logFC< logfc()[1]) &
+                                   data$df$pval <= padj() ),] ) 
+      infoBox("All DE genes", numall, icon = icon("arrows-alt-v"), color = "light-blue", fill = TRUE)
+  })
+  output$upbox <- renderInfoBox({
+      validate(need(data$df, ""))
+      validate(need(padj(), ""))
+      validate(need(logfc(), ""))
+      numup <- nrow( data$df[(data$df$logFC >= logfc()[2]) & (data$df$pval <= padj()), ]) 
+      numgenesDE$up <- numup
+      infoBox("Upregulated genes", numup, icon = icon("thumbs-up", lib = "glyphicon"), color = "light-blue", fill=TRUE)
+  })
+  output$downbox <- renderInfoBox({
+      validate(need(data$df, ""))
+      validate(need(padj(), ""))
+      validate(need(logfc(), ""))
+      numdown <- nrow( data$df[(data$df$logFC <= logfc()[1]) & (data$df$pval <= padj()), ])
+      numgenesDE$down <- numdown
+      infoBox("Downregulated genes", numdown, icon = icon("thumbs-down", lib = "glyphicon"), color = "light-blue", fill=TRUE)
+  })
+  
+  output$fcdown <- renderUI({
+        validate(need(logfcRange$min, ""))
+        validate(need(logfc(),""))
+        initMin <- round( logfcRange$min, 2)
+        initMax <- round( logfcRange$max, 2)
+        if(logfc()[1]>=0){
+            fgColor="#6baed6"
+            inputColor="white"
+            bgColor ="#46505a"
+            rotation="clockwise"
+            min=0
+            max=initMax
+            angleOffset = 0
+        }else{
+            fgColor="#46505a"
+            inputColor="white"
+            bgColor ="#e6550d"
+            rotation="clockwise"
+            min=initMin
+            max=0
+            angleOffset=180
+        }
+      knobInput(
+          inputId = "myKnobdown",
+          label = "Lower logFC cutoff",
+          value = round(logfc()[1],2),
+          min = min,
+          max=max,
+          rotation=rotation,
+          displayPrevious = TRUE,
+          fgColor = fgColor,
+          inputColor = inputColor,
+          bgColor = bgColor,
+          #angleArc = 180,
+          #angleOffset = angleOffset,
+          width = "80%",
+          height = "80%"
+      )
+  })
+  output$fcup <- renderUI({
+        validate(need(logfcRange$min, ""))
+        validate(need(logfc(),""))
+        initMin <- round( logfcRange$min, 2)
+        initMax <- round( logfcRange$max, 2)
+        if(logfc()[2]>=0){
+            fgColor="#6baed6"
+            inputColor="white"
+            bgColor ="#46505a" 
+            rotation="clockwise"
+            min=0
+            max=initMax
+            angleOffset = 0
+        }else{
+            fgColor="#46505a"
+            inputColor="white"
+            bgColor ="#e6550d"
+            rotation="clockwise"
+            min=initMin
+            max=0
+            angleOffset=180
+        }
+      knobInput(
+          inputId = "myKnobup",
+          label = "Upper LogFC cutoff",
+          value = round(logfc()[2], 2),
+          min = min,
+          max=max,
+          rotation=rotation,
+          displayPrevious = TRUE,
+          fgColor = fgColor,
+          inputColor = inputColor,
+          bgColor = bgColor,
+          #angleArc = 180,
+          #angleOffset = angleOffset,
+          width = "80%",
+          height = "80%"
+      )
+  })
+  output$pval <- renderUI({
+      validate(need(padj(), ""))
+      fgColor = "#74c476"
+      inputColor = "white"
+      bgColor = "#46505a"
+      knobInput(
+          inputId = "myKnobpval",
+          label = "P.adj cutoff",
+          value = round(padj(), 2),
+          min = 0,
+          max = 0.2,
+          rotation = "clockwise",
+          displayPrevious = TRUE,
+          fgColor = fgColor,
+          inputColor = inputColor,
+          bgColor = bgColor,
+          #angleArc = 180,
+          #angleOffset = 90,
+          width = "80%",
+          height = "80%"
+      )
+  })
+# ....................... ####
+  # volcano plot #########
+  output$volcano <- renderPlot( {
+    #validate(need(datos$dds, "Load file and condition to render Volcano"))
+    validate(need(data$df, "Load file to render plot"))
+    res <-  data$df
+    #res$`-log10padj` <- (-log10(res$padj)) 
+    CustomVolcano(res, lab = as.character(res$SYMBOL),
+                  selectLab = genesVolcano(),
+                    x = 'logFC',
+                    y = 'pval',
+                    pCutoff = padj(),
+                    FCcutoffUP = logfc()[2],
+                    FCcutoffDOWN = logfc()[1],
+                    xlim = c(-8, 8),
+                    col = c("gray", "#7cccc3", "#d99c01", input$upColor, input$downColor))
+    })
+
+xy <- reactive({
+  res <- data$df
+  res$`-log10padj` <- (-log10(res$pval)) 
+  nearPoints(res, input$plot_click1, xvar = "logFC", yvar = "-log10padj")
+})
+output$texto1 <- renderTable( digits = -2, {
+        xy <- xy()
+        xy[,c(2,4,5,6)]
+    })
+# ....................... ####
+## karyoplot ######################################
+output$karyoPlot <- renderPlot({
+    validate(need(data$df, "Load file to render plot"))
+    krtp(data$df, specie = specie(), pval = padj(), fcdown = logfc()[1],
+         fcup = logfc()[2], bg="#46505a", coldown="#4ADBFF" , colup="#f7665c")
+})
+# ....................... ####
   # variables KEGG ##########################
   rowsUp <- reactive({input$table_rows_selected})
-  
  # KEGG table up#####################################
   output$table <- DT::renderDT(server=TRUE,{
     validate(need(kgg$up, "Load file to render table"))
@@ -408,6 +671,12 @@ server <- function(input, output, session) {
   })
  
 # KEGG cnet Up #################
+  output$legend <- renderPlot({
+    validate(need(kgg$up, "Load file and select to render Net Plot"))
+    validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
+    validate(need(kggDT$up, ""))
+    visnetLegend(kggDT = kggDT$up , rows = rowsUp() )
+  })
    output$keggNet <- renderUI({
     if(!isTRUE( input$keggNet_switch ) ){
       plotOutput("cnetKegg", height = "600px")
@@ -425,13 +694,13 @@ server <- function(input, output, session) {
     validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$up, ""))
     visData <- customVisNet(kgg$up, nTerm=rowsUp(), kggDT$up,
-                             up = data$genesUp$SYMBOL, down = NULL )
+                             up = data$df$SYMBOL, down = NULL )
     visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
     visOptions(highlightNearest = list(enabled=TRUE, hover=TRUE),
                 nodesIdSelection = TRUE)
   })
   
- 
+ # ....................... ####
  # variable GO ###################################
     bprowsup <- reactive({input$tableBP_rows_selected})
     mfrowsup <- reactive({input$tableMF_rows_selected})
@@ -573,8 +842,8 @@ server <- function(input, output, session) {
     gosCC <- go$up[go$up$Ont=="CC",]
     dotPlotGO(gosCC[ccrowsup,], n = length(ccrowsup))
   })
-    
-  ## variable GSEA
+# ....................... ####
+  ## variable GSEA #############
     gsearow <- reactive({input$gseaTable_rows_selected})
    
   # GSEA table ##########################
