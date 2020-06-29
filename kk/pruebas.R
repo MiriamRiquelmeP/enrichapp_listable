@@ -19,36 +19,39 @@ goup <- customGO(genesUp, species = "Mm")
 godown <- customGO(genesDown, species = "Mm")
 goall <- customGO(genesall, species = "Mm")
 
-goBarplot(enrichGO = goall, resGO = data, genes= genesall,
-              category = "BP", nrows = 1:10)
-goBarplot(enrichGO = goup, resGO = data, genes= genesUp,
-              category = "BP", nrows = )
-goBarplot(enrichGO = godown, resGO = data, genes= genesDown,
-              category = "BP", nrows = 1:10)   
+gosBP <- godown[godown$Ont=="BP",]
+plotGO(enrichdf = gosBP[1:10, ], nrows = length(1:10), ont="BP",
+           colors = "red")
+
+enrichdf <- gosBP[1:10, ]; ont="BP"
+    names(enrichdf) <- gsub("P.DE", "p-val", names(enrichdf) )
+    names(enrichdf) <- gsub("DE", "DEG", names(enrichdf) )
+    dataTitle <- list(BP=c("Biological Process", colors),
+                      MF=c("Molecular Function", colors),
+                      CC=c("Cellular Component", colors))
+    enrichdf <- enrichdf[enrichdf$Ont == ont, ]
+    if(!is.null(orderby)){
+        orderby = match.arg(orderby, c("DEG", "p-val", "N", "Term"))
+        if(orderby=="DEG" | orderby =="Term"){
+            enrichdf <- enrichdf %>% arrange(get(orderby))
+        } else{ enrichdf <- enrichdf %>% arrange(desc(get(orderby)))}
+    }
+    p <- enrichdf[1:10,] %>%
+        plot_ly(x=~DEG, y=~go_id, text=~Term, type = "bar",
+                marker = list(color=dataTitle[[ont]][2]),
+                orientation = "v",
+                hovertext = paste0(enrichdf$Term,"\np-val: ",format(enrichdf$`p-val`, scientific = T, digits = 4))) %>%
+        layout(margin = list(l=100), yaxis = list(title=""),
+               title=dataTitle[[ont]][1], xaxis = list(tickvals = c(1:max(enrichdf$DEG) ) ))
+p
+
+##############################
+p <- enrichdf[1:10, ] %>%  ggplot( aes( y = DEG, x = go_id,
+                        text = paste0("p-val: ",format(`p-val`, scientific = T, digits = 4)) )) +
+        geom_bar(position = "stack", stat = "identity") + coord_flip() +
+        theme(axis.text.y = element_text(angle = 0, hjust = 1)) + theme_bw() +
+        scale_fill_manual(values = "red") +
+        theme(panel.grid.major.y  = element_blank(),
+              axis.title.y = element_blank())
+    p <- p %>% ggplotly(tooltip = "all")
     
-goBarplot <- function(enrichGO=NULL, resGO=NULL, genes=NULL,
-                      category=NULL, nrows=NULL ){
-    require(GOplot)
-    go <- enrichGO
-    go <- go[ go$Ont==category, ]
-    if(is.null(nrows) | length(nrows)<2 ){
-        totalRows <- min(90, dim(go)[1] )
-        go <- go[ seq_len(totalRows), ]
-    } else{
-        go <- go[nrows, ]
-        }
-    res <- resGO
-    go2 <- go %>% group_by(Ont) %>% as.data.frame() 
-    goDT <- go2DT(go2, genes)
-    # preparar tabla GO
-    go2$genes <- goDT$genes
-    go2 <- go2 %>% dplyr::select(Ont,go_id,Term,genes, P.DE)
-    names(go2) <- c("Category","ID", "Term", "Genes", "adj_pval")
-    #preparar tabla genelist
-    #names(res)
-    res2 <- res %>% dplyr::select(SYMBOL, logFC, pval)
-    names(res2) <- c("ID","logFC","adj.P.Val")
-    # crear objeto circ
-    circ <- circle_dat(go2, res2)
-    GOBar(circ)
-}

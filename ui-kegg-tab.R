@@ -112,7 +112,7 @@ fluidPage(
                     )
             )
         ), #fin tab all genes ..................##############
-        tabPanel("keggUpTab", "Upregulated genes",          # pestaña Up ##############
+        tabPanel(value = "keggUpTab", title = "Upregulated genes",          # pestaña Up ##############
             tags$br(),
             fluidRow(  # primera fila
                 column( width = 3,
@@ -208,7 +208,7 @@ fluidPage(
                     )
             )
         ), #fin tab Up genes ................... #####
-        tabPanel("keggDownTab", "Downregulated genes",   # pestaña Down ##########
+        tabPanel(value = "keggDownTab", title = "Downregulated genes",   # pestaña Down ##########
             tags$br(),
             fluidRow(  # primera fila
                 column( width = 3,

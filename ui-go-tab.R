@@ -200,7 +200,7 @@ fluidPage(
         ), #fin tab all genes
 ###### Upregulated genes #####################################
 ## BP up #############################
-        tabPanel("goUpTab", "Upregulated genes",          # pestaña upregulates
+        tabPanel(value = "goUpTab", title = "Upregulated genes",          # pestaña upregulates
             tabsetPanel(  # tabsetpanel up
              tabPanel("Biological Proccess",
             fluidRow(  # primera fila
@@ -330,7 +330,7 @@ fluidRow(  # primera fila
         ))), #fin tab upregulated genes
 ## Down regulated genes ############################################
 ## BP down ##############################
-        tabPanel("goDownTab", "Downregulated genes",          # pestaña downregulates
+        tabPanel(value = "goDownTab", title = "Downregulated genes",  # pestaña downregulates
             tabsetPanel(
                 tabPanel( "Biological proccess",
             fluidRow(  # primera fila

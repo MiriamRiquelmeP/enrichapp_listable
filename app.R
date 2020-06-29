@@ -1011,12 +1011,17 @@ output$karyoPlot <- renderPlot({
     bprowsall <- bprowsall()
     if(is.null(bprowsall)){bprowsall <- c(1:10)}
     gosBP <- go$all[go$all$Ont=="BP",]
-    p <- plotGOAll(enrichdf = gosBP[bprowsall, ], nrows = length(bprowsall), ont="BP", 
-              genesUp = genes$Up, genesDown = genes$Down,
-              colors = c(input$downColor, input$upColor))
-    if( typeBarBpAll() == "Dodge") { print(p[[1]]) }
-    else if ( typeBarBpAll() == "Stack") { print(p[[2]]) }
-    else { print(p[[3]]) }
+    if(isTRUE(df3cols$TF)){
+          p <- plotGOAll(enrichdf = gosBP[bprowsall, ], nrows = length(bprowsall), ont="BP", 
+                    genesUp = genes$Up, genesDown = genes$Down,
+                    colors = c(input$downColor, input$upColor))
+          if( typeBarBpAll() == "Dodge") { print(p[[1]]) }
+          else if ( typeBarBpAll() == "Stack") { print(p[[2]]) }
+          else { print(p[[3]]) }
+    } else{
+        plotGO(enrichdf = gosBP[bprowsall, ], nrows = length(bprowsall), ont="BP",
+               colors = "#045a8d" )
+    }
   })
   # GO BP dotplot all ################### 
   output$BPDotall <- renderPlot({
@@ -1081,12 +1086,18 @@ output$karyoPlot <- renderPlot({
     mfrowsall <- mfrowsall()
     if(is.null(mfrowsall)){mfrowsall <- c(1:10)}
     gosMF <- go$all[go$all$Ont=="MF",]
-    p <- plotGOAll(enrichdf = gosMF[mfrowsall, ], nrows = length(mfrowsall), ont="MF", 
-                   genesUp = genes$Up, genesDown = genes$Down,
-                   colors = c(input$downColor, input$upColor))
-    if( typeBarMfAll() == "Dodge") { print(p[[1]]) }
-    else if ( typeBarMfAll() == "Stack") { print(p[[2]]) }
-    else { print(p[[3]]) }
+    if(isTRUE(df3cols$TF)){
+        p <- plotGOAll(enrichdf = gosMF[mfrowsall, ], nrows = length(mfrowsall), ont="MF", 
+                       genesUp = genes$Up, genesDown = genes$Down,
+                       colors = c(input$downColor, input$upColor))
+        if( typeBarMfAll() == "Dodge") { print(p[[1]]) }
+        else if ( typeBarMfAll() == "Stack") { print(p[[2]]) }
+        else { print(p[[3]]) }
+    }
+    else{
+        plotGO(enrichdf = gosMF[mfrowsall, ], nrows = length(mfrowsall), ont="MF",
+               colors = "#045a8d" )
+    }
   })
   # GO MF dotplot all ################### 
   output$MFDotall <- renderPlot({
@@ -1151,12 +1162,18 @@ output$karyoPlot <- renderPlot({
     ccrowsall <- ccrowsall()
     if(is.null(ccrowsall)){ccrowsall <- c(1:10)}
     gosCC <- go$all[go$all$Ont=="CC",]
+    if(isTRUE(df3cols$TF)){
     p <- plotGOAll(enrichdf = gosCC[ccrowsall, ], nrows = length(ccrowsall), ont="CC", 
                    genesUp = genes$Up, genesDown = genes$Down,
                    colors = c(input$downColor, input$upColor))
     if( typeBarCcAll() == "Dodge") { print(p[[1]]) }
     else if ( typeBarCcAll() == "Stack") { print(p[[2]]) }
     else { print(p[[3]]) }
+    }
+    else{
+        plotGO(enrichdf = gosCC[ccrowsall, ], nrows = length(ccrowsall), ont="CC",
+               colors = "#045a8d" )
+    }
   })
   # GO CC dotplot all ################### 
   output$CCDotall <- renderPlot({
