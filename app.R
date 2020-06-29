@@ -205,6 +205,7 @@ server <- function(input, output, session) {
   numgenesDE <- reactiveValues(up=NULL, down=NULL)
   genesVolcano <- reactive({input$genesVolcano})
   genes <- reactiveValues()
+  typeBarKeggAll <- reactive({input$selectkeggall})
   ## Leer data ##########################
   observeEvent(input$geneButton,{
     # comprobaciones listado manual
@@ -282,13 +283,25 @@ server <- function(input, output, session) {
   
   #TODO: Definir qué hacer con los NAs, eliminar, reportar, etc
   ## Pulsar Enrich Button ################################################
-  observeEvent(input$enrichButton,{
+  observeEvent(input$enrichButtons,{
     if( dim(data$df)[2]==3 ){
       kgg$all <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
       kggDT$all <- kegg2DT(kgg$all, data$df[,c("SYMBOL","ENTREZID") ] )
       go$all <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
-      goDT$all <- go2DT(enrichdf = go$up, data = data$df[,c("SYMBOL","ENTREZID") ] )
-    }
+      goDT$all <- go2DT(enrichdf = go$all, data = data$df[,c("SYMBOL","ENTREZID") ] )
+      hideTab(inputId = "keggTabSetPanel", target = "keggDownTab")
+      hideTab(inputId = "keggTabSetPanel", target = "keggUpTab")
+      hideTab(inputId = "goTabSetPanel", target = "goUpTab")
+      hideTab(inputId = "goTabSetPanel", target = "goDownTab")
+      hideTab(inputId = "boxPanelBP", target = "gobarplotallbp")
+      hideTab(inputId = "boxPanelMF", target = "gobarplotallmf")
+      hideTab(inputId = "boxPanelCC", target = "gobarplotallcc")
+      hideTab(inputId = "boxPanelBP", target = "gocirplotallbp")
+      hideTab(inputId = "boxPanelMF", target = "gocirplotallmf")
+      hideTab(inputId = "boxPanelCC", target = "gocirplotallcc")
+    }  
+    })
+  observeEvent(input$enrichButton,{
     if( dim(data$df)[2]==5 ){
       genes$Up <- data$df[data$df$logFC >= logfc()[2] & data$df$pval <= padj(),
                           c("SYMBOL","ENTREZID")]
@@ -315,10 +328,7 @@ server <- function(input, output, session) {
       
       go$down <- customGO(genes$Down, species = "Mm")
       goDT$down <- go2DT(enrichdf = go$down, data = genes$Down )
-      kgg$up <- customKegg(data$df[,c("SYMBOL","ENTREZID") ], species = specie() )
-      kggDT$up <- kegg2DT(kgg$up, data$df[,c("SYMBOL","ENTREZID") ] )
-      go$up <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
-      goDT$up <- go2DT(enrichdf = go$up, data = data$df[,c("SYMBOL","ENTREZID") ] )
+      
       gsea$gsea <- gseaKegg(data$df[, c("ENTREZID","logFC")], specie() )
     }
   })
@@ -359,13 +369,13 @@ server <- function(input, output, session) {
   output$enrichbutton <- renderUI({
     validate(need(data$df, ""))
     validate(need(!isTRUE(df3cols$TF), ""))
-    actionBttn("enrichButton", label = "Click to run enrichment", size="lg", color="default", icon = icon("images"))
+    actionBttn("enrichButtons", label = "Click to run enrichment", size="lg", color="default", icon = icon("images"))
   })
   
 
 ## sidebar menu kegg ###################
   output$menuKegg <- renderMenu({
-      validate(need(kgg$up, ""))
+      validate(need(kgg$all, ""))
       sidebarMenu(
           menuItem(
               "Kegg Enrichment",
@@ -373,8 +383,8 @@ server <- function(input, output, session) {
               icon = icon("chart-bar")
           )
           )
-          })
-  
+        })
+    
     # Acciones al pulsar applyButton ################
   padjVal <- reactiveValues(val=0.05)
   fcVal <- reactiveValues( val=c(-1.5, 1.5) )
@@ -403,7 +413,7 @@ server <- function(input, output, session) {
       
   ## side menubar GO #########################
       output$menuGO <- renderMenu({
-      validate(need(go$up,""))
+      validate(need(go$all,""))
       sidebarMenu(  
         menuItem(
               "GO Enrichment",
@@ -424,7 +434,7 @@ server <- function(input, output, session) {
     # ui selector de genes para volcano plot #######################
   output$geneSelector <- renderUI({
     validate(need(data$df, ""))
-    genes <- as.character(data$df$GeneName_Symbol[ which(!( data$df$pval>padj() &
+    genes <- as.character(data$df$SYMBOL[ which(!( data$df$pval>padj() &
                                                              data$df$logFC>logfc()[1] &
                                                              data$df$logFC<logfc()[2] )) ])
     selectInput("genesVolcano", label="Select gene[s] to label",
@@ -654,17 +664,27 @@ output$karyoPlot <- renderPlot({
         buttons = customButtons))
   }) 
   # KEGG barplot all################
-  output$keggPlot <- renderPlotly ({
+  output$keggPlotAll <- renderPlotly ({
     validate(need(kgg$all, "Load file to render BarPlot"))
     rowsAll <- rowsAll()
     if(is.null(rowsAll)){
-        if( dim(kgg$all)[1]<10 ){rowsUp <-  seq_len(nrow(kgg$all)) }
+        if( dim(kgg$all)[1]<10 ){rowsAll <-  seq_len(nrow(kgg$all)) }
         else{ rowsAll <-  seq_len(10)  }
-        }
-    plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = c(input$allColor))
+    }
+    if(isTRUE(df3cols$TF)){
+        p <- plotKeggAll(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll),
+                    genesUp = genes$Up, genesDown = genes$Down,
+                    colors = c(input$downColor, input$upColor))
+        if(typeBarKeggAll() == "Dodge"){
+            print(p[[1]])   } else if(typeBarKeggAll()=="Stack"){
+                print(p[[2]])} else {print(p[[3]])} 
+    } else{  # caso de que sea sólo una lista simple
+        plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = "red")
+            }
+        
   })
   # KEGG chordiag plot all ###############
-  output$keggChord <- renderChorddiag({
+  output$keggChordAll <- renderChorddiag({
     validate(need(kgg$all, "Load file to render ChordPlot"))
     rowsAll<- rowsAll()
     if(is.null(rowsAll)){
@@ -700,25 +720,25 @@ output$karyoPlot <- renderPlot({
   })
  
 # KEGG cnet All #################
-  output$legend <- renderPlot({
+  output$legendAll <- renderPlot({
     validate(need(kgg$all, "Load file and select to render Net Plot"))
     validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$all, ""))
     visnetLegend(kggDT = kggDT$all , rows = rowsAll() )
   })
-   output$keggNet <- renderUI({
-    if(!isTRUE( input$keggNet_switch ) ){
-      plotOutput("cnetKegg", height = "600px")
+   output$keggAllNet <- renderUI({
+    if(!isTRUE( input$keggAllNet_switch ) ){
+      plotOutput("cnetAllKegg", height = "600px")
     } else{
-      visNetworkOutput("visnetKegg", height = "600px")
+      visNetworkOutput("visnetKeggAll", height = "600px")
     }
   })
-  output$cnetKegg <- renderPlot({
+  output$cnetAllKegg <- renderPlot({
     validate(need(kgg$all, "Load file and select to render Net Plot"))
     validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
-    customCnetKegg(kgg$all, rowsAll(), genesAll = data$df, genesDown = NULL)
+    customCnetKegg(kgg$all, rowsAll(), genesUp = data$df, genesDown = NULL)
   })
-  output$visnetKegg <- renderVisNetwork({
+  output$visnetKeggAll <- renderVisNetwork({
     validate(need(kgg$all, "Load file and select to render Net Plot"))
     validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$all, ""))
@@ -804,25 +824,25 @@ output$karyoPlot <- renderPlot({
   })
  
 # KEGG cnet Up #################
-  output$legend <- renderPlot({
+  output$legendUp <- renderPlot({
     validate(need(kgg$up, "Load file and select to render Net Plot"))
     validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$up, ""))
     visnetLegend(kggDT = kggDT$up , rows = rowsUp() )
   })
-   output$keggNet <- renderUI({
-    if(!isTRUE( input$keggNet_switch ) ){
-      plotOutput("cnetKegg", height = "600px")
+   output$keggUpNet <- renderUI({
+    if(!isTRUE( input$keggUpNet_switch ) ){
+      plotOutput("cnetKeggUp", height = "600px")
     } else{
-      visNetworkOutput("visnetKegg", height = "600px")
+      visNetworkOutput("visnetKeggUp", height = "600px")
     }
   })
-  output$cnetKegg <- renderPlot({
+  output$cnetKeggUp <- renderPlot({
     validate(need(kgg$up, "Load file and select to render Net Plot"))
     validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
     customCnetKegg(kgg$up, rowsUp(), genesUp = data$df, genesDown = NULL)
   })
-  output$visnetKegg <- renderVisNetwork({
+  output$visnetKeggUp <- renderVisNetwork({
     validate(need(kgg$up, "Load file and select to render Net Plot"))
     validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$up, ""))
@@ -834,9 +854,9 @@ output$karyoPlot <- renderPlot({
   })
   # ....................... ####
   # variables KEGG Down ##########################
-  rowsDown <- reactive({input$table_rows_selected})
+  rowsDown <- reactive({input$tableDown_rows_selected})
  # KEGG table down #####################################
-  output$table <- DT::renderDT(server=TRUE,{
+  output$tableDown <- DT::renderDT(server=TRUE,{
     validate(need(kgg$down, "Load file to render table"))
     names(kggDT$down)[names(kggDT$down) == "DE"] <- "DEG"
     names(kggDT$down)[names(kggDT$down) == "P.DE"] <- "p-value"
@@ -861,7 +881,7 @@ output$karyoPlot <- renderPlot({
         buttons = customButtons))
   }) 
   # KEGG barplot down################
-  output$keggPlot <- renderPlotly ({
+  output$keggPlotDown <- renderPlotly ({
     validate(need(kgg$down, "Load file to render BarPlot"))
     rowsDown <- rowsDown()
     if(is.null(rowsDown)){
@@ -871,7 +891,7 @@ output$karyoPlot <- renderPlot({
     plotKegg(enrichdf = kgg$down[rowsDown,], nrows = length(rowsDown), colors = c(input$downColor))
   })
   # KEGG chordiag plot down ###############
-  output$keggChord <- renderChorddiag({
+  output$keggChordDown <- renderChorddiag({
     validate(need(kgg$down, "Load file to render ChordPlot"))
     rowsDown<- rowsDown()
     if(is.null(rowsDown)){
@@ -907,25 +927,25 @@ output$karyoPlot <- renderPlot({
   })
  
 # KEGG cnet Down #################
-  output$legend <- renderPlot({
+  output$legendDown <- renderPlot({
     validate(need(kgg$down, "Load file and select to render Net Plot"))
     validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$down, ""))
     visnetLegend(kggDT = kggDT$down , rows = rowsDown() )
   })
-   output$keggNet <- renderUI({
-    if(!isTRUE( input$keggNet_switch ) ){
-      plotOutput("cnetKegg", height = "600px")
+   output$keggDownNet <- renderUI({
+    if(!isTRUE( input$keggDownNet_switch ) ){
+      plotOutput("cnetKeggDown", height = "600px")
     } else{
-      visNetworkOutput("visnetKegg", height = "600px")
+      visNetworkOutput("visnetKeggDown", height = "600px")
     }
   })
-  output$cnetKegg <- renderPlot({
+  output$cnetKeggDown <- renderPlot({
     validate(need(kgg$down, "Load file and select to render Net Plot"))
     validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
-    customCnetKegg(kgg$down, rowsDown(), genesDown = data$df, genesDown = NULL)
+    customCnetKegg(kgg$down, rowsDown(), genesDown = data$df, genesUp = NULL)
   })
-  output$visnetKegg <- renderVisNetwork({
+  output$visnetKeggDown <- renderVisNetwork({
     validate(need(kgg$down, "Load file and select to render Net Plot"))
     validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
     validate(need(kggDT$down, ""))
@@ -936,12 +956,237 @@ output$karyoPlot <- renderPlot({
                 nodesIdSelection = TRUE)
   })
  # ....................... ####
- # variable GO ###################################
-    bprowsup <- reactive({input$tableBP_rows_selected})
-    mfrowsup <- reactive({input$tableMF_rows_selected})
-    ccrowsup <- reactive({input$tableCC_rows_selected})
+ # variables GO ###################################
+  rowsAll <- reactive({input$tableAll_rows_selected})
+  rowsUp <- reactive({input$table_rows_selected})
+  rowsdown <- reactive({input$tableDown_rows_selected})
   
- # GO table BP UP#####################
+  bprowsall <- reactive({input$tableBPall_rows_selected}) 
+  mfrowsall <- reactive({input$tableMFall_rows_selected})
+  ccrowsall <- reactive({input$tableCCall_rows_selected})
+  
+  bprowsup <- reactive({input$tableBP_rows_selected})
+  mfrowsup <- reactive({input$tableMF_rows_selected})
+  ccrowsup <- reactive({input$tableCC_rows_selected})
+  
+  bprowsdown <- reactive({input$tableBPdown_rows_selected})
+  mfrowsdown <- reactive({input$tableMFdown_rows_selected})
+  ccrowsdown <- reactive({input$tableCCdown_rows_selected})
+  
+  typeBarBpAll <- reactive({input$selectbpall})
+  typeBarMfAll <- reactive({input$selectmfall})
+  typeBarCcAll <- reactive({input$selectccall})
+  
+ # ....................... ####
+   # GO table BP ALL #####################
+  output$tableBPall <- DT::renderDataTable(server=TRUE,{
+    validate(need(goDT$all, "Load file to render table"))
+    goDT <- goDT$all 
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level) 
+    tituloTabla <- paste0("Table: GO-BP all genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "BPall",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "BPall",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="BP",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                 pageLength = 10, white_space = "normal",
+                 buttons = customButtons))
+  })
+  # GO plots BP all #####################
+  output$plotBPall <- renderPlotly({
+    validate(need(go$all, "Load file to render plot"))
+    bprowsall <- bprowsall()
+    if(is.null(bprowsall)){bprowsall <- c(1:10)}
+    gosBP <- go$all[go$all$Ont=="BP",]
+    p <- plotGOAll(enrichdf = gosBP[bprowsall, ], nrows = length(bprowsall), ont="BP", 
+              genesUp = genes$Up, genesDown = genes$Down,
+              colors = c(input$downColor, input$upColor))
+    if( typeBarBpAll() == "Dodge") { print(p[[1]]) }
+    else if ( typeBarBpAll() == "Stack") { print(p[[2]]) }
+    else { print(p[[3]]) }
+  })
+  # GO BP dotplot all ################### 
+  output$BPDotall <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    validate(need(bprowsall(), "Select the terms of interest to render DotPlot"))
+    bprowsall <- bprowsall()
+    if(is.null(bprowsall)){bprowsall <- c(1:20)}
+    gosBP <- go$all[go$all$Ont=="BP",]
+    dotPlotGO(gosBP[bprowsall,], n = length(bprowsall))
+  })
+  # GO gobarplot BP all #######################
+  output$gobarplotAllBP <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    bprowsall <- bprowsall()
+    goBarplot(enrichGO = go$all, resGO = data$df, genes= genes$all,
+              category = "BP", nrows = bprowsall)
+  })
+  # GO circle BP all #####################
+  output$goCircleAllBP <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( bprowsall() , "Select at least 4 rows"))
+    bprowsall <- bprowsall()
+    if(length(bprowsall)>=4){
+      circ <- data2circle(go=go$all[bprowsall, ], res=data$df, genes=genes$all)
+      circle(circ, label.size = 3, nsub = length(bprowsall), table.legend = FALSE)
+    }
+  })
+  # ...................... #############
+  # GO table MF all #####################
+  output$tableMFall <- DT::renderDataTable({
+    validate(need(goDT$all, "Load file to render table"))
+    goDT <- goDT$all
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-MF all genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "MFall",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "MFall",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="MF",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           pageLength = 10, white_space = "normal",
+                           buttons = customButtons,
+                           ajax = list(serverSide = TRUE, processing = TRUE))
+    )
+  })
+  # GO plots MF all  #####################
+  output$plotMFall <- renderPlotly({
+    validate(need(go$all, "Load file to render plot"))
+    mfrowsall <- mfrowsall()
+    if(is.null(mfrowsall)){mfrowsall <- c(1:10)}
+    gosMF <- go$all[go$all$Ont=="MF",]
+    p <- plotGOAll(enrichdf = gosMF[mfrowsall, ], nrows = length(mfrowsall), ont="MF", 
+                   genesUp = genes$Up, genesDown = genes$Down,
+                   colors = c(input$downColor, input$upColor))
+    if( typeBarMfAll() == "Dodge") { print(p[[1]]) }
+    else if ( typeBarMfAll() == "Stack") { print(p[[2]]) }
+    else { print(p[[3]]) }
+  })
+  # GO MF dotplot all ################### 
+  output$MFDotall <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    validate(need(mfrowsall(), "Select the terms of interest to render DotPlot"))
+    mfrowsall <- mfrowsall()
+    if(is.null(mfrowsall)){mfrowsall <- c(1:20)}
+    gosMF <- go$all[go$all$Ont=="MF",]
+    dotPlotGO(gosMF[mfrowsall,], n = length(mfrowsall))
+  })
+  # GO gobarplot MF all ####################
+  output$gobarplotAllMF <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    mfrowsall <- mfrowsall()
+    goBarplot(enrichGO = go$all, resGO = data$df, genes= genes$all,
+              category = "MF", nrows = mfrowsall)
+  })
+  # GO circle MF all #####################
+  output$goCircleAllMF <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( mfrowsall() , "Select at least 4 rows"))
+    mfrowsall <- mfrowsall()
+    if(length(mfrowsall)>=4){
+      circ <- data2circle(go=go$all[mfrowsall, ], res=data$df, genes=genes$all)
+      circle(circ, label.size = 3, nsub = length(mfrowsall), table.legend = FALSE)
+    }
+  })
+  # ............ ###############################
+  # GO table CC all #####################
+  output$tableCCall <- DT::renderDataTable(server=TRUE,{
+    validate(need(goDT$all, "Load file to render table"))
+    goDT <- goDT$all
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-CC all genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "CCall",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "CCall",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="CC",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           pageLength = 10, white_space = "normal",
+                           buttons = customButtons,
+                           ajax = list(serverSide = TRUE, processing = TRUE))
+    )
+  })
+  # GO plots CC all #####################
+  output$plotCCall <- renderPlotly({
+    validate(need(go$all, "Load file to render plot"))
+    ccrowsall <- ccrowsall()
+    if(is.null(ccrowsall)){ccrowsall <- c(1:10)}
+    gosCC <- go$all[go$all$Ont=="CC",]
+    p <- plotGOAll(enrichdf = gosCC[ccrowsall, ], nrows = length(ccrowsall), ont="CC", 
+                   genesUp = genes$Up, genesDown = genes$Down,
+                   colors = c(input$downColor, input$upColor))
+    if( typeBarCcAll() == "Dodge") { print(p[[1]]) }
+    else if ( typeBarCcAll() == "Stack") { print(p[[2]]) }
+    else { print(p[[3]]) }
+  })
+  # GO CC dotplot all ################### 
+  output$CCDotall <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    validate(need(ccrowsall(), "Select the terms of interest to render DotPlot"))
+    ccrowsall <- ccrowsall()
+    if(is.null(ccrowsall)){ccrowsall <- c(1:20)}
+    gosCC <- go$all[go$all$Ont=="CC",]
+    dotPlotGO(gosCC[ccrowsall,], n = length(ccrowsall))
+  })
+  # GO gobarplot CC all #######################
+  output$gobarplotAllCC <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    ccrowsall <- ccrowsall()
+    goBarplot(enrichGO = go$all, resGO = data$df, genes= genes$all,
+              category = "CC", nrows = ccrowsall)
+  })
+  # GO circle CC all #####################
+  output$goCircleAllCC <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( ccrowsall() , "Select at least 4 rows"))
+    ccrowsall <- ccrowsall()
+    if(length(ccrowsall)>=4){
+      circ <- data2circle(go=go$all[ccrowsall, ], res=data$df, genes=genes$all)
+      circle(circ, label.size = 3, nsub = length(ccrowsall), table.legend = FALSE)
+    }
+  })
+  # ............ ###############################
+  # GO table BP UP#####################
   output$tableBP <- DT::renderDataTable(server=TRUE,{
     validate(need(goDT$up, "Load file to render table"))
     goDT <- goDT$up
@@ -949,7 +1194,8 @@ output$karyoPlot <- renderPlot({
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
     names(goDT)[names(goDT) == "level"] <- "Ont.level"
     goDT$Ont.level = as.integer(goDT$Ont.level)
-    tituloTabla <- paste0("Table: GO-BP DEG genes")
+    tituloTabla <- paste0("Table: GO-BP up-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
     customButtons <- list(
         list(extend = "copy", title=tituloTabla),
         list(extend = "excel",
@@ -977,7 +1223,7 @@ output$karyoPlot <- renderPlot({
            colors = c(input$upColor) )
   })
   # GO BP dotplot up ################### 
-  output$BPDotUp <- renderPlotly({
+  output$BPDotUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     validate(need(bprowsup(), "Select the terms of interest to render DotPlot"))
     bprowsup <- bprowsup()
@@ -985,6 +1231,25 @@ output$karyoPlot <- renderPlot({
     gosBP <- go$up[go$up$Ont=="BP",]
     dotPlotGO(gosBP[bprowsup,], n = length(bprowsup))
   })
+  # GO gobarplot BP Up #######################
+  output$gobarplotUpBP <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    bprowsup <- bprowsup()
+    goBarplot(enrichGO = go$up, resGO = data$df, genes= genes$Up,
+              category = "BP", nrows = bprowsup)
+  })
+    # GO circle BP Up #####################
+  output$goCircleUpBP <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( bprowsup() , "Select at least 4 rows"))
+    bprowsup <- bprowsup()
+    if(length(bprowsup)>=4){
+      circ <- data2circle(go=go$up[bprowsup, ], res=data$df, genes=genes$Up)
+      circle(circ, label.size = 3, nsub = length(bprowsup), table.legend = FALSE)
+    }
+  })
+  # ............ ###############################
   # GO table MF UP #####################
   output$tableMF <- DT::renderDataTable({
     validate(need(goDT$up, "Load file to render table"))
@@ -993,7 +1258,8 @@ output$karyoPlot <- renderPlot({
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
     names(goDT)[names(goDT) == "level"] <- "Ont.level"
     goDT$Ont.level = as.integer(goDT$Ont.level)
-    tituloTabla <- paste0("Table: GO-MF DEG genes")
+    tituloTabla <- paste0("Table: GO-MF up-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
     customButtons <- list(
         list(extend = "copy", title=tituloTabla),
         list(extend = "excel",
@@ -1023,7 +1289,7 @@ output$karyoPlot <- renderPlot({
            colors = c(input$upColor) )
   })
   # GO MF dotplot up ################### 
-  output$MFDotUp <- renderPlotly({
+  output$MFDotUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     validate(need(mfrowsup(), "Select the terms of interest to render DotPlot"))
     mfrowsup <- mfrowsup()
@@ -1031,6 +1297,25 @@ output$karyoPlot <- renderPlot({
     gosMF <- go$up[go$up$Ont=="MF",]
     dotPlotGO(gosMF[mfrowsup,], n = length(mfrowsup))
   })
+  # GO gobarplot MF Up #######################
+  output$gobarplotUpMF <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    mfrowsup <- mfrowsup()
+    goBarplot(enrichGO = go$up, resGO = data$df, genes= genes$Up,
+              category = "MF", nrows = mfrowsup)
+  })
+  # GO circle MF Up #####################
+  output$goCircleUpMF <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( mfrowsup() , "Select at least 4 rows"))
+    mfrowsup <- mfrowsup()
+    if(length(mfrowsup)>=4){
+      circ <- data2circle(go=go$up[mfrowsup, ], res=data$df, genes=genes$Up)
+      circle(circ, label.size = 3, nsub = length(mfrowsup), table.legend = FALSE)
+    }
+  })
+  # ............ ###############################
   # GO table CC UP #####################
   output$tableCC <- DT::renderDataTable(server=TRUE,{
     validate(need(goDT$up, "Load file to render table"))
@@ -1039,7 +1324,8 @@ output$karyoPlot <- renderPlot({
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
     names(goDT)[names(goDT) == "level"] <- "Ont.level"
     goDT$Ont.level = as.integer(goDT$Ont.level)
-    tituloTabla <- paste0("Table: GO-CC DEG genes")
+    tituloTabla <- paste0("Table: GO-CC up-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
     customButtons <- list(
         list(extend = "copy", title=tituloTabla),
         list(extend = "excel",
@@ -1069,7 +1355,7 @@ output$karyoPlot <- renderPlot({
            colors = c(input$upColor))
   })
   # GO CC dotplot up ################### 
-  output$CCDotUp <- renderPlotly({
+  output$CCDotUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     validate(need(ccrowsup(), "Select the terms of interest to render DotPlot"))
     ccrowsup <- ccrowsup()
@@ -1077,49 +1363,222 @@ output$karyoPlot <- renderPlot({
     gosCC <- go$up[go$up$Ont=="CC",]
     dotPlotGO(gosCC[ccrowsup,], n = length(ccrowsup))
   })
-# ....................... ####
-  ## variable GSEA #############
-    gsearow <- reactive({input$gseaTable_rows_selected})
-   
-  # GSEA table ##########################
-  output$gseaTable <- renderDataTable({
-    validate(need(gsea$gsea, "Load file to render table"))
-    mygsea <- gsea$gsea
-    if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
-        createAlert(session, anchorId = "gsea", title = "Oops!!", 
-          content = "Sorry, I didn't get any significant results for this analysis",
-          append=FALSE, style = "info")
-    } else{
-    table <- mygsea@result[mygsea@result$p.adjust<=0.05 ,2:9] %>% 
-      mutate_at(vars(3:7), ~round(., 4))
-
-    tituloTabla <- paste0("Table: GSEA pathway")
+  # GO gobarplot CC Up #######################
+  output$gobarplotUpCC <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    ccrowsup <- ccrowsup()
+    goBarplot(enrichGO = go$up, resGO = data$df, genes= genes$Up,
+              category = "CC", nrows = ccrowsup)
+  })
+  # GO circle CC Up #####################
+  output$goCircleUpCC <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( ccrowsup() , "Select at least 4 rows"))
+    ccrowsup <- ccrowsup()
+    if(length(ccrowsup)>=4){
+      circ <- data2circle(go=go$up[ccrowsup, ], res=data$df, genes=genes$Up)
+      circle(circ, label.size = 3, nsub = length(ccrowsup), table.legend = FALSE)
+    }
+  })
+  # ............ ###############################
+  # GO table BP DOWN #####################
+  output$tableBPdown <- DT::renderDataTable(server=TRUE,{
+    validate(need(goDT$down, "Load file to render table"))
+    goDT <- goDT$down
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-BP down-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
     customButtons <- list(
         list(extend = "copy", title=tituloTabla),
         list(extend = "excel",
-            filename = "GSEAkegg",
+            filename = "BPdown",
             title = tituloTabla),
         list(extend = "pdf",
-            filename = "GSEAkegg",
+            filename = "BPdown",
             title = tituloTabla),
         list(extend = "print", title=tituloTabla)
     )
-    DT::datatable( table,
-                   rownames=FALSE,
-                   filter = list(position="top", clear=FALSE),
-                   options = list(order = list(list(4, 'asc')),
-                     lengthMenu = list(c(10,25,50,100,-1), c(10,25,50,100,"All")),
-                     columnDefs = list(list(orderable = FALSE,
-                                            className = "details-control",
-                                            targets = 1)
-                     ),
-                     dom = "Bfrtipl",
-                     buttons = customButtons,
-                     list(pageLength = 10, white_space = "normal")
-                   )
+    datatable2(goDT[goDT$Ont=="BP",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           buttons = customButtons,
+                           pageLength = 10, white_space = "normal")
     )
+  })
+  # GO plots BP DOWN #####################
+  output$plotBPdown <- renderPlotly({
+    validate(need(go$down, "Load file to render plot"))
+    bprowsdown <- bprowsdown()
+    if(is.null(bprowsdown)){bprowsdown <- c(1:10)}
+    gosBP <- go$down[go$down$Ont=="BP",]
+    plotGO(enrichdf = gosBP[bprowsdown, ], nrows = length(bprowsdown), ont="BP",
+           colors = c(input$downColor))
+  })
+  # GO BP dotplot down ################### 
+  output$BPDotDown <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    validate(need(bprowsdown(), "Select the terms of interest to render DotPlot"))
+    bprowsdown <- bprowsdown()
+    if(is.null(bprowsdown)){bprowsdown <- c(1:20)}
+    gosBP <- go$down[go$down$Ont=="BP",]
+    dotPlotGO(gosBP[bprowsdown,], n = length(bprowsdown))
+  })
+  # GO gobarplot BP down #######################
+  output$gobarplotDownBP <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    bprowsdown <- bprowsdown()
+    goBarplot(enrichGO = go$down, resGO = data$df, genes= genes$Down,
+              category = "BP", nrows = bprowsdown)
+  })
+  # GO circle BP Down #####################
+  output$goCircleDownBP <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( bprowsdown() , "Select at least 4 rows"))
+    bprowsdown <- bprowsdown()
+    if(length(bprowsdown)>=4){
+      circ <- data2circle(go=go$down[bprowsdown, ], res=data$df, genes=genes$Down)
+      circle(circ, label.size = 3, nsub = length(bprowsdown), table.legend = FALSE)
     }
   })
+  # ............ ###############################
+  # GO table MF DOWN #####################
+  output$tableMFdown <- DT::renderDataTable({
+    validate(need(goDT$down, "Load file to render table"))
+    goDT <- goDT$down
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-MF down-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "MFdown",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "MFdown",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="MF",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           pageLength = 10, white_space = "normal",
+                           buttons = customButtons,
+                           ajax = list(serverSide = TRUE, processing = TRUE))
+    )
+  })
+  # GO plots MF DOWN #####################
+  output$plotMFdown <- renderPlotly({
+    validate(need(go$down, "Load file to render plot"))
+    mfrowsdown <- mfrowsdown()
+    if(is.null(mfrowsdown)){mfrowsdown <- c(1:10)}
+    gosMF <- go$down[go$down$Ont=="MF",]
+    plotGO(enrichdf = gosMF[mfrowsdown, ], nrows = length(mfrowsdown), ont = "MF",
+           colors = c(input$downColor) )
+  })
+  # GO MF dotplot down ################### 
+  output$MFDotDown <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    validate(need(mfrowsdown(), "Select the terms of interest to render DotPlot"))
+    mfrowsdown <- mfrowsdown()
+    if(is.null(mfrowsdown)){mfrowsdown <- c(1:20)}
+    gosMF <- go$down[go$down$Ont=="MF",]
+    dotPlotGO(gosMF[mfrowsdown,], n = length(mfrowsdown))
+  })
+  # GO gobarplot MF down #######################
+  output$gobarplotDownMF <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    mfrowsdown <- mfrowsdown()
+    goBarplot(enrichGO = go$down, resGO = data$df, genes= genes$Down,
+              category = "MF", nrows = mfrowsdown)
+  })
+  # GO circle MF Down #####################
+  output$goCircleDownMF <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( mfrowsdown() , "Select at least 4 rows"))
+    mfrowsdown <- mfrowsdown()
+    if(length(mfrowsdown)>=4){
+      circ <- data2circle(go=go$down[mfrowsdown, ], res=data$df, genes=genes$Down)
+      circle(circ, label.size = 3, nsub = length(mfrowsdown), table.legend = FALSE)
+    }
+  })
+  # ............ ###############################
+  # GO table CC DOWN #####################
+  output$tableCCdown <- DT::renderDataTable(server=TRUE,{
+    validate(need(goDT$down, "Load file to render table"))
+    goDT <- goDT$down
+    names(goDT)[names(goDT) == "DE"] <- "DEG"
+    names(goDT)[names(goDT) == "P.DE"] <- "p-value"
+    names(goDT)[names(goDT) == "level"] <- "Ont.level"
+    goDT$Ont.level = as.integer(goDT$Ont.level)
+    tituloTabla <- paste0("Table: GO-CC down-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
+    customButtons <- list(
+        list(extend = "copy", title=tituloTabla),
+        list(extend = "excel",
+            filename = "CCdown",
+            title = tituloTabla),
+        list(extend = "pdf",
+            filename = "CCdown",
+            title = tituloTabla),
+        list(extend = "print", title=tituloTabla)
+    )
+    datatable2(goDT[goDT$Ont=="CC",], vars = c("genes"),
+               filter = list(position="top", clear=FALSE),
+               escape = FALSE,
+               opts = list(order = list(list(6, 'asc')),
+                           pageLength = 10, white_space = "normal",
+                           buttons = customButtons,
+                           ajax = list(serverSide = TRUE, processing = TRUE))
+    )
+  })
+  # GO plots CC DOWN #####################
+  output$plotCCdown <- renderPlotly({
+    validate(need(go$down, "Load file to render plot"))
+    ccrowsdown <- ccrowsdown()
+    if(is.null(ccrowsdown)){ccrowsdown <- c(1:10)}
+    gosCC <- go$down[go$down$Ont=="CC",]
+    plotGO(enrichdf = gosCC[ccrowsdown,], nrows = length(ccrowsdown), ont="CC",
+           colors = c(input$downColor) )
+  })
+  # GO CC dotplot down ################### 
+  output$CCDotDown <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    validate(need(ccrowsdown(), "Select the terms of interest to render DotPlot"))
+    ccrowsdown <- ccrowsdown()
+    if(is.null(ccrowsdown)){ccrowsdown <- c(1:20)}
+    gosCC <- go$down[go$down$Ont=="CC",]
+    dotPlotGO(gosCC[ccrowsdown,], n = length(ccrowsdown))
+  })
+  # GO gobarplot CC down #######################
+  output$gobarplotDownCC <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    ccrowsdown <- ccrowsdown()
+    goBarplot(enrichGO = go$down, resGO = data$df, genes= genes$Down,
+              category = "CC", nrows = ccrowsdown)
+  })
+  # GO circle CC Down #####################
+  output$goCircleDownCC <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    validate(need(data$df,""))
+    validate(need( ccrowsdown() , "Select at least 4 rows"))
+    ccrowsdown <- ccrowsdown()
+    if(length(ccrowsdown)>=4){
+      circ <- data2circle(go=go$down[ccrowsdown, ], res=data$df, genes=genes$Down)
+      circle(circ, label.size = 3, nsub = length(ccrowsdown), table.legend = FALSE)
+    }
+  })
+  # ...................... ###########
   # GSEA plot ##########################
   output$gseaPlot <- renderPlot({
     validate(need(gsea$gsea, "Load file to render table"))

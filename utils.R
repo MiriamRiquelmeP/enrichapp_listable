@@ -148,10 +148,16 @@ customCnetKegg <- function(kgg, category=NULL, nPath=NULL, byDE=FALSE, nr, genes
             tmp <- tmp[1:nPath, ]
         } else{ stop("nPath must be numeric or NULL")}
     }
-    genesUp$dir <- "#ffa200"
-    #genesDown$dir <- "#91ebff"
-    #genesAll <- rbind(genesUp,genesDown)
-    genesAll <- genesUp
+    
+    if(!is.null(genesUp) & is.null(genesDown)){
+      genesUp$dir <- "#ffa200"; genesAll <- genesUp}
+    if(!is.null(genesDown) & is.null(genesUp)){
+      genesDown$dir <- "#91ebff"; genesAll <- genesDown}
+    if(!is.null(genesUp) & !is.null(genesDown) ){
+      genesUp$dir <- "#ffa200"
+      genesDown$dir <- "#91ebff"
+      genesAll <- rbind(genesUp,genesDown)}
+    
     pval <- tmp[,c(1,4)]
     tmp <- tmp[,c(1,6)]
     tmp2 <- tmp %>%  separate_rows( genes, convert=TRUE)
@@ -2481,15 +2487,15 @@ goBarplot <- function(enrichGO=NULL, resGO=NULL, genes=NULL,
         go <- go[nrows, ]
         }
     res <- resGO
-    go2 <- go %>% group_by(Ont) %>% as.data.frame()
+    go2 <- go %>% group_by(Ont) %>% as.data.frame() 
     goDT <- go2DT(go2, genes)
     # preparar tabla GO
     go2$genes <- goDT$genes
     go2 <- go2 %>% dplyr::select(Ont,go_id,Term,genes, P.DE)
     names(go2) <- c("Category","ID", "Term", "Genes", "adj_pval")
     #preparar tabla genelist
-    names(res)
-    res2 <- res %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
+    #names(res)
+    res2 <- res %>% dplyr::select(SYMBOL, logFC, pval)
     names(res2) <- c("ID","logFC","adj.P.Val")
     # crear objeto circ
     circ <- circle_dat(go2, res2)
@@ -2505,7 +2511,7 @@ data2circle <- function(go=NULL, res=NULL, genes=NULL){
   names(go2) <- c("Category","ID", "Term", "Genes", "adj_pval")
   #preparar tabla genelist
   names(res)
-  res2 <- res %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
+  res2 <- res %>% dplyr::select(SYMBOL, logFC, pval)
   names(res2) <- c("ID","logFC","adj.P.Val")
   # crear objeto circ
   require(GOplot)
