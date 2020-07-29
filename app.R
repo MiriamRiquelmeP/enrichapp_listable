@@ -644,16 +644,11 @@ output$karyoPlot <- renderPlot({
     names(kggDT$all)[names(kggDT$all) == "DE"] <- "DEG"
     names(kggDT$all)[names(kggDT$all) == "P.DE"] <- "p-value"
     tituloTabla <- paste0("Table: Kegg DEG genes")
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "kegg",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "kegg",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="keggall", title=tituloTabla ) )
+
     datatable2(
       kggDT$all,
       vars = c("genes"),
@@ -758,16 +753,11 @@ output$karyoPlot <- renderPlot({
     names(kggDT$up)[names(kggDT$up) == "DE"] <- "DEG"
     names(kggDT$up)[names(kggDT$up) == "P.DE"] <- "p-value"
     tituloTabla <- paste0("Table: Kegg DEG genes")
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "kegg",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "kegg",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="keggup", title=tituloTabla ) )
+    
     datatable2(
       kggDT$up,
       vars = c("genes"),
@@ -861,16 +851,11 @@ output$karyoPlot <- renderPlot({
     names(kggDT$down)[names(kggDT$down) == "DE"] <- "DEG"
     names(kggDT$down)[names(kggDT$down) == "P.DE"] <- "p-value"
     tituloTabla <- paste0("Table: Kegg DEG genes")
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "kegg",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "kegg",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="keggdown", title=tituloTabla ) )
+    
     datatable2(
       kggDT$down,
       vars = c("genes"),
@@ -988,16 +973,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level) 
     tituloTabla <- paste0("Table: GO-BP all genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "BPall",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "BPall",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="BPall", title=tituloTabla ) )
+    
     datatable2(goDT[goDT$Ont=="BP",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1061,16 +1041,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-MF all genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "MFall",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "MFall",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="MFall", title=tituloTabla ) )
+        
     datatable2(goDT[goDT$Ont=="MF",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1137,16 +1112,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-CC all genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "CCall",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "CCall",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="CCall", title=tituloTabla ) )
+    
     datatable2(goDT[goDT$Ont=="CC",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1213,16 +1183,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-BP up-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "BPup",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "BPup",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="BPup", title=tituloTabla ) )
+    
     datatable2(goDT[goDT$Ont=="BP",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1277,16 +1242,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-MF up-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "MFup",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "MFup",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="MFup", title=tituloTabla ) )
+  
     datatable2(goDT[goDT$Ont=="MF",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1343,16 +1303,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-CC up-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "CCup",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "CCup",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="CCup", title=tituloTabla ) )
+
     datatable2(goDT[goDT$Ont=="CC",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1409,16 +1364,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-BP down-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "BPdown",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "BPdown",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="BPdown", title=tituloTabla ) )
+   
     datatable2(goDT[goDT$Ont=="BP",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1474,16 +1424,11 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-MF down-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "MFdown",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "MFdown",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="MFdown", title=tituloTabla ) )
+
     datatable2(goDT[goDT$Ont=="MF",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
@@ -1540,17 +1485,12 @@ output$karyoPlot <- renderPlot({
     goDT$Ont.level = as.integer(goDT$Ont.level)
     tituloTabla <- paste0("Table: GO-CC down-regulated genes | ","log2FC: ",logfc()[1],"_",logfc()[2]," | ","padj: ",padj()," | ",
                           "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
-    customButtons <- list(
-        list(extend = "copy", title=tituloTabla),
-        list(extend = "excel",
-            filename = "CCdown",
-            title = tituloTabla),
-        list(extend = "pdf",
-            filename = "CCdown",
-            title = tituloTabla),
-        list(extend = "print", title=tituloTabla)
-    )
-    datatable2(goDT[goDT$Ont=="CC",], vars = c("genes"),
+    customButtons <-  list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="CCdown", title=tituloTabla ) )
+
+        datatable2(goDT[goDT$Ont=="CC",], vars = c("genes"),
                filter = list(position="top", clear=FALSE),
                escape = FALSE,
                opts = list(order = list(list(6, 'asc')),
