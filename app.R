@@ -80,6 +80,7 @@ sidebar <- dashboardSidebar(useShinyalert(),
 
 ### BODY ###############
 body <- dashboardBody(
+      tags$script(HTML("$('body').addClass('fixed');")),
       add_busy_gif(src="dna-mini.gif", position = "full-page", width = 10, height = 10 ),
      tags$head(
        tags$link(rel = "stylesheet", type = "text/css", href = "customDark.css")
@@ -274,11 +275,11 @@ server <- function(input, output, session) {
     }
     if( dim(data$df)[2]==5 ){
       df3cols$TF <- TRUE
+      logfcRange$min <- min(data$df$logFC)
+      logfcRange$max <- max(data$df$logFC)
+      fcRange$min <- ifelse(logfcRange$min<0, -(2^abs(logfcRange$min)), 2^abs(logfcRange$min))
+      fcRange$max <- ifelse(logfcRange$max<0, -(2^abs(logfcRange$max)), 2^abs(logfcRange$max))
     }
-    logfcRange$min <- min(data$df$logFC)
-    logfcRange$max <- max(data$df$logFC)
-    fcRange$min <- ifelse(logfcRange$min<0, -(2^abs(logfcRange$min)), 2^abs(logfcRange$min))
-    fcRange$max <- ifelse(logfcRange$max<0, -(2^abs(logfcRange$max)), 2^abs(logfcRange$max))
   })
   
   #TODO: Definir qué hacer con los NAs, eliminar, reportar, etc
