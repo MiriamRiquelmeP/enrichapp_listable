@@ -75,6 +75,14 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                 sidebarMenu("", sidebarMenuOutput("menuKegg")),
                                 sidebarMenu("", sidebarMenuOutput("menuGO")),
                                 sidebarMenu("", sidebarMenuOutput("menuGSEA"))
+                            ),
+                            box(width = 12,
+                              h5(strong("Generate report"), align = 'center'),
+                              sidebarMenu( 
+                                menuItem(
+                                  fluidRow(column(12, align = "center", offset=0,
+                                                  uiOutput("report")))))
+                              
                             )
                             )
 
@@ -174,6 +182,8 @@ ui <- dashboardPage(title="Rnaseq viewer and report",
 ########################################## SERVER #################################################
 server <- function(input, output, session) {
   
+    enrichflag=NULL
+    
     observeEvent(input$aboutButton, {
           shinyalert("Enrich app 2020", HTML("Authors:<br>
       Miriam Riquelme Pérez 
@@ -189,24 +199,26 @@ server <- function(input, output, session) {
                  imageWidth = 200, imageHeight = 100, html=TRUE)})
   
   # variables reactivas ######
-  specie <- reactive({input$specie})
   annotation <- reactive({input$annotation})
-  validatedGene <- reactiveValues(list=NULL)
   data <- reactiveValues(df=NULL)
-  kgg <- reactiveValues(all=NULL)
-  kggDT <- reactiveValues(all=NULL)
+  df3cols <- reactiveValues(TF=FALSE)
+  enrichflag <- reactiveValues(one=NULL, three=NULL)
+  fc_switch <- reactive({input$fc_switch})
+  fcRange <- reactiveValues() # min y max fc
   go <- reactiveValues(all=NULL)
   goDT <- reactiveValues(all=NULL)
   gene <- reactiveValues(lost=NULL)
-  gsea <- reactiveValues(gsea=NULL)
-  df3cols <- reactiveValues(TF=FALSE)
-  fc_switch <- reactive({input$fc_switch})
-  logfcRange <- reactiveValues() # min y max logfc
-  fcRange <- reactiveValues() # min y max fc
-  numgenesDE <- reactiveValues(up=NULL, down=NULL)
-  genesVolcano <- reactive({input$genesVolcano})
   genes <- reactiveValues()
+  genesVolcano <- reactive({input$genesVolcano})
+  gsea <- reactiveValues(gsea=NULL)
+  kgg <- reactiveValues(all=NULL)
+  kggDT <- reactiveValues(all=NULL)
+  logfcRange <- reactiveValues() # min y max logfc
+  numgenesDE <- reactiveValues(up=NULL, down=NULL)
+  specie <- reactive({input$specie})
   typeBarKeggAll <- reactive({input$selectkeggall})
+  validatedGene <- reactiveValues(list=NULL)
+  vals <- reactiveValues()
   ## Leer data ##########################
   observeEvent(input$geneButton,{
     # comprobaciones listado manual
@@ -290,6 +302,7 @@ server <- function(input, output, session) {
       kggDT$all <- kegg2DT(kgg$all, data$df[,c("SYMBOL","ENTREZID") ] )
       go$all <- customGO(data$df[,c("SYMBOL","ENTREZID") ], species = "Mm")
       goDT$all <- go2DT(enrichdf = go$all, data = data$df[,c("SYMBOL","ENTREZID") ] )
+      enrichflag$one <- TRUE
       hideTab(inputId = "keggTabSetPanel", target = "keggDownTab")
       hideTab(inputId = "keggTabSetPanel", target = "keggUpTab")
       hideTab(inputId = "goTabSetPanel", target = "goUpTab")
@@ -306,31 +319,23 @@ server <- function(input, output, session) {
     if( dim(data$df)[2]==5 ){
       genes$Up <- data$df[data$df$logFC >= logfc()[2] & data$df$pval <= padj(),
                           c("SYMBOL","ENTREZID")]
-      
       genes$Down <- data$df[data$df$logFC <= logfc()[1] & data$df$pval <= padj(),
                           c("SYMBOL","ENTREZID")]
-      
       genes$all <- rbind(genes$Up, genes$Down)
-      
       kgg$all <- customKegg(genes$all, species = specie() ) #"Mm"), species.KEGG = "mmu")
       kggDT$all <- kegg2DT(kgg$all, genes$all)
-      
       kgg$up <- customKegg(genes$Up, species = specie() ) #"Mm")#, species.KEGG = "mmu")
       kggDT$up <- kegg2DT(kgg$up, genes$Up)
-      
       kgg$down <- customKegg(genes$Down, species = specie() ) # "Mm")#, species.KEGG = "mmu")
       kggDT$down <- kegg2DT(kgg$down, genes$Down)
-      
       go$all <- customGO(genes$all, species = "Mm")
       goDT$all <- go2DT(enrichdf = go$all, data = genes$all )
-      
       go$up <- customGO(genes$Up, species = "Mm")
       goDT$up <- go2DT(enrichdf = go$up, data = genes$Up )
-      
       go$down <- customGO(genes$Down, species = "Mm")
       goDT$down <- go2DT(enrichdf = go$down, data = genes$Down )
-      
       gsea$gsea <- gseaKegg(data$df[, c("ENTREZID","logFC")], specie() )
+      enrichflag$three <- TRUE
     }
   })
   
@@ -1551,8 +1556,222 @@ output$karyoPlot <- renderPlot({
         enrichplot::gseaplot2(gsea$gsea, geneSetID = gseanr, pvalue_table = TRUE, ES_geom = "line")
         }
   })
+  # ...................... ###########
+  # #### report #############################
+    output$report <- renderUI({
+      validate(need(enrichflag, "" ) )
+      if(isTRUE(enrichflag$one) ){
+        enrichflag$three <- FALSE
+        actionButton("report1", "html report")
+      }else if(isTRUE(enrichflag$three) ){
+        enrichflag$one <- FALSE
+        actionButton("report3", "html report")
+      }
+  })
+  
+  observeEvent(input$report3, {
+      showModal(popupModal3())
+    })
+  
+  observeEvent(input$report1, {
+      showModal(popupModal1())
+    })
+  
+
+  applyPress <- reactiveValues(ok=FALSE)
+  observeEvent(input$ok,{
+        applyPress$ok <- TRUE
+        if(isTRUE(enrichflag$three)){
+          vals$preview <- input$modalPreview
+          vals$keggUp <- input$modalkeggUp
+          vals$keggDown <- input$modalkeggDown
+          vals$GOUp <- input$modalGOUp
+          vals$GODown <- input$modalGODown
+          vals$GSEA <- input$modalGSEA
+        }
+        vals$keggAll <- input$modalkeggAll
+        vals$GOAll <- input$modalGOAll
+        #removeModal()
+  })
+  
+  output$downloadhtml <- renderUI({
+    validate(need(isTRUE(applyPress$ok), ""))
+    downloadButton("download", "Download report")
+    })
+  
+    output$download <- downloadHandler(
+    filename = "report.html",
+    content = function(file) {
+      removeModal()
+      applyPress$ok <- FALSE
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      file.copy("mystyle.css", file.path(tempdir(), "mystyle.css"), overwrite = TRUE)
+      file.copy("utilsReport.R", file.path(tempdir(),"utils.R"), overwrite = TRUE)
+      file.copy("resources/", tempdir(), overwrite = TRUE, recursive = TRUE)
+      file.copy("resources/dna-svg-small-13.gif",
+      file.path(tempdir(), "resources/dna-svg-small-13.gif"), overwrite = TRUE)
+      ## inicializar variables preview
+      pcaObj <- boxObj <- heatObj <- clusterObj <- top6Obj <- top1Obj <- FALSE
+      karyObj <- FALSE
+      volcObj <- maObj <- FALSE
+      ## inicializar variables kegg
+      tablekgaObj <- barkgaObj <- chorkgaObj <- dotkgaObj <- heatkgaObj <- netkgaObj <- FALSE
+      tablekguObj <- barkguObj <- chorkguObj <- dotkguObj <- heatkguObj <- netkguObj <- FALSE
+      tablekgdObj <- barkgdObj <- chorkgdObj <- dotkgdObj <- heatkgdObj <- netkgdObj <- FALSE
+      ## inicializar variables Go
+      tablegoaObj <- bargoaObj <- dotgoaObj <- gobargoaObj <- gocirclegoaObj <- FALSE
+      tablegouObj <- bargouObj <- dotgouObj <- gobargouObj <- gocirclegouObj <- FALSE
+      tablegodObj <- bargodObj <- dotgodObj <- gobargodObj <- gocirclegodObj <- FALSE
+      ## inicializar variables GSEA
+      tablegseaObj <- plotgseaObj <- FALSE 
+      ## Asigna variables
+          rlogdatos <- rlog$datos; colorespca <- coloresPCA$colores();
+          variables <- variables(); samplename <- samplename() 
+          vsddata <- vsd$data; boxplotswitch <- boxplotswitch()
+          specie <- specie(); numheatmap <- numheatmap()
+          ressh <- res$sh; datosdds <- datos$dds; gene <- gene(); 
+          padj <- padj(); logfc <- logfc(); genesvolcano <- genesVolcano();
+          upcolor <- input$upColor; downcolor <- input$downColor
+          kggall <- kgg$all; genesdeup <- numgenesDE$up; genesdedown <- numgenesDE$down
+          kggdtall <- kggDT$all; datagenesup <- data$genesUp; datagenesdown <- data$genesDown
+          typebarkeggall <- typeBarKeggAll()
+          typebarbpall <- typeBarBpAll(); typebarmfall <- typeBarMfAll();
+          typebarccall <- typeBarCcAll()
+          kggup <- kgg$up; kggdown <- kgg$down; kggdtup <- kggDT$up; kggdtdown <- kggDT$down; 
+          goall <- go$all; godtall <- goDT$all; 
+          goup <- go$up; godtup <- goDT$up; 
+          godown <- go$down; godtdown <- goDT$down; 
+          bprowsall <- bprowsall(); mfrowsall <- mfrowsall(); ccrowsall <- ccrowsall()
+          bprowsup <- bprowsup(); mfrowsup <- mfrowsup(); ccrowsup <- ccrowsup()
+          bprowsdown <- bprowsdown(); mfrowsdown <- mfrowsdown(); ccrowsdown <- ccrowsdown()
+          gsearow <- gsearow(); gseagsea <- gsea$gsea
+          textnotes <- input$textNotes
+      #nrows
+          nrowsall <- rowsAll()
+          if(!is.null(kggDT$all)){
+            if(is.null(nrowsall)){ 
+              nrowsall <-  ( if( dim(kggDT$all)[1]<10) seq_len(nrow(kggDT$all)) else seq_len(10) ) }
+          }
+          nrowsup <- rowsUp()
+          if(!is.null(kggDT$up)){
+            if(is.null(nrowsup)){ 
+              nrowsup <-  ( if( dim(kggDT$up)[1]<10) seq_len(nrow(kggDT$up)) else seq_len(10) ) }
+          }
+          nrowsdown <- rowsdown()
+          if(!is.null(kggDT$down)){
+            if(is.null(nrowsdown)){ 
+              nrowsdown <-  ( if( dim(kggDT$down)[1]<10) seq_len(nrow(kggDT$down)) else seq_len(10) ) }
+          }
+      if(!is.null(vals$preview)){      #para preview
+        if( ("PCA" %in% vals$preview) ){ pcaObj <- TRUE}
+        if("BoxPlot" %in% vals$preview){boxObj <- TRUE}
+        if("Heatmap" %in% vals$preview){heatObj <- TRUE}
+        if("Cluster" %in% vals$preview){clusterObj <- TRUE}
+        if("Top6" %in% vals$preview){top6Obj <- TRUE}
+        if("Top1" %in% vals$preview){top1Obj <- TRUE}
+        if("Karyoplot" %in% vals$preview){karyObj <- TRUE}
+        if("Volcano" %in% vals$preview){volcObj <- TRUE}
+        if("MA" %in% vals$preview){ maObj <- TRUE}
+      }
+      if(!is.null(vals$keggAll)){ #para keggAll
+        if("Table" %in% vals$keggAll){ tablekgaObj <- TRUE }
+        if("Barplot" %in% vals$keggAll){ barkgaObj <- TRUE }
+        if("Chorplot" %in% vals$keggAll){ chorkgaObj <- TRUE }
+        if("Dotplot" %in% vals$keggAll){ dotkgaObj <- TRUE }
+        if("Heatmap" %in% vals$keggAll){ heatkgaObj <- TRUE }
+        if("Netplot" %in% vals$keggAll){ netkgaObj <- TRUE }
+      }
+      if(!is.null(vals$keggUp)){ #para keggUp
+        if("Table" %in% vals$keggUp){ tablekguObj <- TRUE }
+        if("Barplot" %in% vals$keggUp){ barkguObj <- TRUE }
+        if("Chorplot" %in% vals$keggUp){ chorkguObj <- TRUE }
+        if("Dotplot" %in% vals$keggUp){ dotkguObj <- TRUE }
+        if("Heatmap" %in% vals$keggUp){ heatkguObj <- TRUE }
+        if("Netplot" %in% vals$keggUp){ netkguObj <- TRUE }
+      }
+      if(!is.null(vals$keggDown)){ #para keggDown
+        if("Table" %in% vals$keggDown){ tablekgdObj <- TRUE }
+        if("Barplot" %in% vals$keggDown){ barkgdObj <- TRUE }
+        if("Chorplot" %in% vals$keggDown){ chorkgdObj <- TRUE }
+        if("Dotplot" %in% vals$keggDown){ dotkgdObj <- TRUE }
+        if("Heatmap" %in% vals$keggDown){ heatkgdObj <- TRUE }
+        if("Netplot" %in% vals$keggDown){ netkgdObj <- TRUE }
+      }
+      if(!is.null(vals$GOAll)){#para GoAll
+        if("Table" %in% vals$GOAll){ tablegoaObj <- TRUE }
+        if("Barplot" %in% vals$GOAll){ bargoaObj <- TRUE }
+        if("Dotplot" %in% vals$GOAll){ dotgoaObj <- TRUE }
+        if("GObarplot" %in% vals$GOAll){ gobargoaObj <- TRUE }
+        if("GOcircleplot" %in% vals$GOAll){ gocirclegoaObj <- TRUE }
+      }
+      if(!is.null(vals$GOUp)){#para GoUp
+        if("Table" %in% vals$GOUp){ tablegouObj <- TRUE }
+        if("Barplot" %in% vals$GOUp){ bargouObj <- TRUE }
+        if("Dotplot" %in% vals$GOUp){ dotgouObj <- TRUE }
+        if("GObarplot" %in% vals$GOUp){ gobargouObj <- TRUE }
+        if("GOcircleplot" %in% vals$GOUp){ gocirclegouObj <- TRUE }
+      }
+      if(!is.null(vals$GODown)){#para GoDown
+        if("Table" %in% vals$GODown){ tablegodObj <- TRUE }
+        if("Barplot" %in% vals$GODown){ bargodObj <- TRUE }
+        if("Dotplot" %in% vals$GODown){ dotgodObj <- TRUE }
+        if("GObarplot" %in% vals$GODown){ gobargodObj <- TRUE }
+        if("GOcircleplot" %in% vals$GODown){ gocirclegodObj <- TRUE }
+      }
+      if(!is.null(vals$GSEA)){#para GSEA
+        if("Table" %in% vals$GSEA){ tablegseaObj <- TRUE}
+        if("GSEA plot" %in% vals$GSEA){ plotgseaObj <- TRUE}
+        }
+
+      params <- list( values = vals, 
+                      pcaObj = pcaObj, rlog = rlogdatos, colorespca = colorespca,
+                     variables = variables, samplename = samplename,
+                     vsd = vsddata, boxplotswitch = boxplotswitch, boxObj = boxObj,
+                     specie = specie, numheatmap = numheatmap, heatObj = heatObj,
+                     clusterObj = clusterObj, 
+                     ressh = ressh, datosdds = datosdds, top6Obj = top6Obj, 
+                     gene = gene, top1Obj = top1Obj,
+                     karyObj = karyObj, padj =padj, logfc = logfc,
+                     volcObj = volcObj, genesvolcano = genesvolcano, 
+                     upcolor = upcolor, downcolor = downcolor, 
+                     maObj = maObj, 
+                     tablekgaObj = tablekgaObj, kggall = kggall, genesdedown = genesdedown,
+                     genesdeup = genesdeup, kggdtall = kggdtall,
+                     barkgaObj = barkgaObj, nrowsall = nrowsall, datagenesdown = datagenesdown, 
+                     datagenesup = datagenesup, typebarkeggall = typebarkeggall,
+                     chorkgaObj = chorkgaObj, dotkgaObj = dotkgaObj, heatkgaObj = heatkgaObj,
+                     netkgaObj = netkgaObj, tablekguObj = tablekguObj, barkguObj = barkguObj,
+                     chorkguObj = chorkguObj, dotkguObj =dotkguObj, heatkguObj = heatkguObj,
+                     netkguObj = netkguObj, tablekgdObj = tablekgdObj, barkgdObj = barkgdObj,
+                     chorkgdObj = chorkgdObj, dotkgdObj = dotkgdObj, heatkgdObj = heatkgdObj,
+                     netkgdObj = netkgdObj, kggup = kggup, kggdown = kggdown, kggdtup = kggdtup, 
+                     kggdtdown = kggdtdown, nrowsup = nrowsup, nrowsdown = nrowsdown, 
+                     typebarbpall=typebarbpall, typebarmfall=typebarmfall, typebarccall=typebarccall,
+                     tablegoaObj = tablegoaObj, bargoaObj=bargoaObj, dotgoaObj=dotgoaObj,
+                     gobargoaObj=gobargoaObj,gocirclegoaObj=gocirclegoaObj, tablegouObj = tablegouObj,
+                     bargouObj=bargouObj, dotgouObj=dotgouObj, gobargouObj=gobargouObj,
+                     gocirclegouObj=gocirclegouObj, tablegodObj = tablegodObj, bargodObj=bargodObj,
+                     dotgodObj=dotgodObj, gobargodObj=gobargodObj, gocirclegodObj=gocirclegodObj,
+                     goall = goall, godtall=godtall, goup = goup, godtup=godtup,
+                     godown = godown, godtdown=godtdown,
+                     bprowsall=bprowsall, mfrowsall=mfrowsall, ccrowsall=ccrowsall,
+                     bprowsup=bprowsup, mfrowsup=mfrowsup, ccrowsup=ccrowsup,
+                     bprowsdown=bprowsdown, mfrowsdown=mfrowsdown, ccrowsdown=ccrowsdown,
+                     gsearow = gsearow, gseagsea = gseagsea, tablegseaObj = tablegseaObj,
+                     plotgseaObj = plotgseaObj, textnotes = textnotes)
+      
+      params <- c(params, list(tempdir=tempdir() ))
+      rmarkdown::render(
+        tempReport,
+        output_file = file,
+        params = params,
+        envir = new.env(parent = globalenv( ))
+      )
+    } )
+  
+
+  
+     
 }
-
-
-
 shinyApp(ui, server)
