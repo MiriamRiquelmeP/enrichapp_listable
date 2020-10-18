@@ -40,6 +40,8 @@ options(shiny.maxRequestSize = 3000*1024^2)
 header <- dashboardHeader(title = "Gene list enrichment and report", 
                           titleWidth = 300, 
                           dropdownMenuOutput("messageMenu"),
+                          tags$li(class="dropdown", actionButton("notesButton","Notes"),
+                                  style="margin-top:8px; margin-right: 5px"),
                           tags$li(class = "dropdown", actionButton("aboutButton", "About"),
                                   style="margin-top:8px; margin-right: 5px")
 )
@@ -76,14 +78,16 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                 sidebarMenu("", sidebarMenuOutput("menuGO")),
                                 sidebarMenu("", sidebarMenuOutput("menuGSEA"))
                             ),
-                            box(width = 12,
-                              h5(strong("Generate report"), align = 'center'),
-                              sidebarMenu( 
-                                menuItem(
-                                  fluidRow(column(12, align = "center", offset=0,
-                                                  uiOutput("report")))))
+                            tags$div(
+                              box(width = 12,
                               
-                            )
+                                h5(strong("Generate report"), align = 'center'),
+                                sidebarMenu( 
+                                  menuItem(
+                                    fluidRow(column(12, align = "center", offset=0,
+                                                    uiOutput("report")))))
+                                
+                            ), style = "position: absolute; bottom:0;width:100%;")
                             )
 
 ### BODY ###############
@@ -168,7 +172,9 @@ body <- dashboardBody(
                     local = TRUE,
                     encoding = "UTF-8",
                     )$value)
-  ) # fin tab items
+  ), # fin tab items
+    bsModal("modalNotes", "Notes", "notesButton",size="large",
+          textAreaInput("textNotes", "Text Notes", width = "850px", height = "575px"))
 )# fin dashboardbody
 
 ########################################## UI #################################################
@@ -948,10 +954,6 @@ output$karyoPlot <- renderPlot({
   })
  # ....................... ####
  # variables GO ###################################
-  rowsAll <- reactive({input$tableAll_rows_selected})
-  rowsUp <- reactive({input$table_rows_selected})
-  rowsdown <- reactive({input$tableDown_rows_selected})
-  
   bprowsall <- reactive({input$tableBPall_rows_selected}) 
   mfrowsall <- reactive({input$tableMFall_rows_selected})
   ccrowsall <- reactive({input$tableCCall_rows_selected})
@@ -1542,6 +1544,45 @@ output$karyoPlot <- renderPlot({
     }
   })
   # ...................... ###########
+  # variables gsea ################
+  gsearow <- reactive({input$gseaTable_rows_selected}) 
+    # GSEA table ##########################
+  output$gseaTable <- renderDataTable({
+    validate(need(gsea$gsea, "Load file to render table"))
+    mygsea <- gsea$gsea
+    if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
+        createAlert(session, anchorId = "gsea", title = "Oops!!", 
+          content = "Sorry, I didn't get any significant results for this analysis",
+          append=FALSE, style = "info")
+    } else{
+    table <- mygsea@result[mygsea@result$p.adjust<=0.05 ,2:9] %>% 
+      mutate_at(vars(3:7), ~round(., 4))
+
+    tituloTabla <- paste0("Table: GSEA pathway | ",
+                          "log2FC: ",logfc()[1],"_",logfc()[2],
+                          " | ","padj: ",padj()," | ",
+                          "Num genes Up/down: ",numgenesDE$up,"/",numgenesDE$down)
+    customButtons <- list(
+      list(extend = "copy", title=tituloTabla),
+      list(extend="collection", buttons = c("csv", "excel"),
+           text="Download", filename="GSEAkegg", title=tituloTabla ) )
+    
+    DT::datatable( table,
+                   rownames=FALSE,
+                   filter = list(position="top", clear=FALSE),
+                   options = list(order = list(list(4, 'asc')),
+                     lengthMenu = list(c(10,25,50,100,-1), c(10,25,50,100,"All")),
+                     columnDefs = list(list(orderable = FALSE,
+                                            className = "details-control",
+                                            targets = 1)
+                     ),
+                     dom = "Bfrtipl",
+                     buttons = customButtons,
+                     list(pageLength = 10, white_space = "normal")
+                   )
+    )
+    }
+  })
   # GSEA plot ##########################
   output$gseaPlot <- renderPlot({
     validate(need(gsea$gsea, "Load file to render table"))
@@ -1612,8 +1653,6 @@ output$karyoPlot <- renderPlot({
       file.copy("resources/dna-svg-small-13.gif",
       file.path(tempdir(), "resources/dna-svg-small-13.gif"), overwrite = TRUE)
       ## inicializar variables preview
-      pcaObj <- boxObj <- heatObj <- clusterObj <- top6Obj <- top1Obj <- FALSE
-      karyObj <- FALSE
       volcObj <- maObj <- FALSE
       ## inicializar variables kegg
       tablekgaObj <- barkgaObj <- chorkgaObj <- dotkgaObj <- heatkgaObj <- netkgaObj <- FALSE
@@ -1626,51 +1665,48 @@ output$karyoPlot <- renderPlot({
       ## inicializar variables GSEA
       tablegseaObj <- plotgseaObj <- FALSE 
       ## Asigna variables
-          rlogdatos <- rlog$datos; colorespca <- coloresPCA$colores();
-          variables <- variables(); samplename <- samplename() 
-          vsddata <- vsd$data; boxplotswitch <- boxplotswitch()
-          specie <- specie(); numheatmap <- numheatmap()
-          ressh <- res$sh; datosdds <- datos$dds; gene <- gene(); 
-          padj <- padj(); logfc <- logfc(); genesvolcano <- genesVolcano();
-          upcolor <- input$upColor; downcolor <- input$downColor
-          kggall <- kgg$all; genesdeup <- numgenesDE$up; genesdedown <- numgenesDE$down
-          kggdtall <- kggDT$all; datagenesup <- data$genesUp; datagenesdown <- data$genesDown
-          typebarkeggall <- typeBarKeggAll()
-          typebarbpall <- typeBarBpAll(); typebarmfall <- typeBarMfAll();
-          typebarccall <- typeBarCcAll()
-          kggup <- kgg$up; kggdown <- kgg$down; kggdtup <- kggDT$up; kggdtdown <- kggDT$down; 
-          goall <- go$all; godtall <- goDT$all; 
-          goup <- go$up; godtup <- goDT$up; 
-          godown <- go$down; godtdown <- goDT$down; 
+          #rlogdatos <- rlog$datos; colorespca <- coloresPCA$colores();
+          # variables <- variables(); samplename <- samplename() 
+          # vsddata <- vsd$data; boxplotswitch <- boxplotswitch()
+          #specie <- specie(); numheatmap <- numheatmap()
+          # ressh <- res$sh; datosdds <- datos$dds; gene <- gene(); 
+          #genesvolcano <- genesVolcano();
+          #upcolor <- input$upColor; downcolor <- input$downColor
+          #kggall <- kgg$all; genesdeup <- numgenesDE$up; genesdedown <- numgenesDE$down
+          # kggdtall <- kggDT$all; datagenesup <- data$genesUp; datagenesdown <- data$genesDown
+          # typebarkeggall <- typeBarKeggAll()
+          # typebarbpall <- typeBarBpAll(); typebarmfall <- typeBarMfAll();
+          # typebarccall <- typeBarCcAll()
+          # kggup <- kgg$up; kggdown <- kgg$down; kggdtup <- kggDT$up; kggdtdown <- kggDT$down; 
+          # goall <- go$all; godtall <- goDT$all; 
+          # goup <- go$up; godtup <- goDT$up; 
+          # godown <- go$down; godtdown <- goDT$down; 
           bprowsall <- bprowsall(); mfrowsall <- mfrowsall(); ccrowsall <- ccrowsall()
           bprowsup <- bprowsup(); mfrowsup <- mfrowsup(); ccrowsup <- ccrowsup()
           bprowsdown <- bprowsdown(); mfrowsdown <- mfrowsdown(); ccrowsdown <- ccrowsdown()
-          gsearow <- gsearow(); gseagsea <- gsea$gsea
-          textnotes <- input$textNotes
+          gsearow <- gsearow()
+          # gseagsea <- gsea$gsea
+          # textnotes <- input$textNotes
       #nrows
           nrowsall <- rowsAll()
           if(!is.null(kggDT$all)){
             if(is.null(nrowsall)){ 
-              nrowsall <-  ( if( dim(kggDT$all)[1]<10) seq_len(nrow(kggDT$all)) else seq_len(10) ) }
+              nrowsall <-  ( if( dim(kggDT$all)[1]<10) seq_len(nrow(kggDT$all))
+                             else seq_len(10) ) }
           }
           nrowsup <- rowsUp()
           if(!is.null(kggDT$up)){
             if(is.null(nrowsup)){ 
-              nrowsup <-  ( if( dim(kggDT$up)[1]<10) seq_len(nrow(kggDT$up)) else seq_len(10) ) }
+              nrowsup <-  ( if( dim(kggDT$up)[1]<10) seq_len(nrow(kggDT$up))
+                            else seq_len(10) ) }
           }
-          nrowsdown <- rowsdown()
+          nrowsdown <- rowsDown()
           if(!is.null(kggDT$down)){
             if(is.null(nrowsdown)){ 
-              nrowsdown <-  ( if( dim(kggDT$down)[1]<10) seq_len(nrow(kggDT$down)) else seq_len(10) ) }
+              nrowsdown <-  ( if( dim(kggDT$down)[1]<10) seq_len(nrow(kggDT$down))
+                              else seq_len(10) ) }
           }
       if(!is.null(vals$preview)){      #para preview
-        if( ("PCA" %in% vals$preview) ){ pcaObj <- TRUE}
-        if("BoxPlot" %in% vals$preview){boxObj <- TRUE}
-        if("Heatmap" %in% vals$preview){heatObj <- TRUE}
-        if("Cluster" %in% vals$preview){clusterObj <- TRUE}
-        if("Top6" %in% vals$preview){top6Obj <- TRUE}
-        if("Top1" %in% vals$preview){top1Obj <- TRUE}
-        if("Karyoplot" %in% vals$preview){karyObj <- TRUE}
         if("Volcano" %in% vals$preview){volcObj <- TRUE}
         if("MA" %in% vals$preview){ maObj <- TRUE}
       }
@@ -1725,41 +1761,35 @@ output$karyoPlot <- renderPlot({
         }
 
       params <- list( values = vals, 
-                      pcaObj = pcaObj, rlog = rlogdatos, colorespca = colorespca,
-                     variables = variables, samplename = samplename,
-                     vsd = vsddata, boxplotswitch = boxplotswitch, boxObj = boxObj,
-                     specie = specie, numheatmap = numheatmap, heatObj = heatObj,
-                     clusterObj = clusterObj, 
-                     ressh = ressh, datosdds = datosdds, top6Obj = top6Obj, 
-                     gene = gene, top1Obj = top1Obj,
-                     karyObj = karyObj, padj =padj, logfc = logfc,
-                     volcObj = volcObj, genesvolcano = genesvolcano, 
-                     upcolor = upcolor, downcolor = downcolor, 
-                     maObj = maObj, 
-                     tablekgaObj = tablekgaObj, kggall = kggall, genesdedown = genesdedown,
-                     genesdeup = genesdeup, kggdtall = kggdtall,
-                     barkgaObj = barkgaObj, nrowsall = nrowsall, datagenesdown = datagenesdown, 
-                     datagenesup = datagenesup, typebarkeggall = typebarkeggall,
+                     specie = specie(), padj =padj(), logfc = logfc(),
+                     volcObj = volcObj, genesvolcano = genesVolcano(), 
+                     upcolor = input$upColor, downcolor = input$downColor, 
+                     maObj = maObj,
+                     datagenesup = data$genesUp, datagenesdown = data$genesDown,
+                     tablekgaObj = tablekgaObj, kggall = kgg$all, genesdedown = numgenesDE$down,
+                     genesdeup = numgenesDE$up, kggdtall = kggDT$all,
+                     barkgaObj = barkgaObj, nrowsall = nrowsall, typebarkeggall = typeBarKeggAll(),
                      chorkgaObj = chorkgaObj, dotkgaObj = dotkgaObj, heatkgaObj = heatkgaObj,
                      netkgaObj = netkgaObj, tablekguObj = tablekguObj, barkguObj = barkguObj,
                      chorkguObj = chorkguObj, dotkguObj =dotkguObj, heatkguObj = heatkguObj,
                      netkguObj = netkguObj, tablekgdObj = tablekgdObj, barkgdObj = barkgdObj,
                      chorkgdObj = chorkgdObj, dotkgdObj = dotkgdObj, heatkgdObj = heatkgdObj,
-                     netkgdObj = netkgdObj, kggup = kggup, kggdown = kggdown, kggdtup = kggdtup, 
-                     kggdtdown = kggdtdown, nrowsup = nrowsup, nrowsdown = nrowsdown, 
-                     typebarbpall=typebarbpall, typebarmfall=typebarmfall, typebarccall=typebarccall,
+                     netkgdObj = netkgdObj, kggup = kgg$up, kggdown = kgg$down, kggdtup = kggDT$up, 
+                     kggdtdown = kggDT$down, nrowsup = nrowsup, nrowsdown = nrowsdown, 
+                     typebarbpall=typeBarBpAll(), typebarmfall=typeBarMfAll(),
+                     typebarccall=typeBarCcAll(),
                      tablegoaObj = tablegoaObj, bargoaObj=bargoaObj, dotgoaObj=dotgoaObj,
                      gobargoaObj=gobargoaObj,gocirclegoaObj=gocirclegoaObj, tablegouObj = tablegouObj,
                      bargouObj=bargouObj, dotgouObj=dotgouObj, gobargouObj=gobargouObj,
                      gocirclegouObj=gocirclegouObj, tablegodObj = tablegodObj, bargodObj=bargodObj,
                      dotgodObj=dotgodObj, gobargodObj=gobargodObj, gocirclegodObj=gocirclegodObj,
-                     goall = goall, godtall=godtall, goup = goup, godtup=godtup,
-                     godown = godown, godtdown=godtdown,
+                     goall = go$all, godtall=goDT$all, goup = go$up, godtup=goDT$up,
+                     godown = go$down, godtdown=goDT$down,
                      bprowsall=bprowsall, mfrowsall=mfrowsall, ccrowsall=ccrowsall,
                      bprowsup=bprowsup, mfrowsup=mfrowsup, ccrowsup=ccrowsup,
                      bprowsdown=bprowsdown, mfrowsdown=mfrowsdown, ccrowsdown=ccrowsdown,
-                     gsearow = gsearow, gseagsea = gseagsea, tablegseaObj = tablegseaObj,
-                     plotgseaObj = plotgseaObj, textnotes = textnotes)
+                     gsearow = gsearow, gseagsea = gsea$gsea, tablegseaObj = tablegseaObj,
+                     plotgseaObj = plotgseaObj, textnotes = input$textNotes)
       
       params <- c(params, list(tempdir=tempdir() ))
       rmarkdown::render(
