@@ -185,7 +185,9 @@ customCnetKeggReport <- function(kgg, category=NULL, nPath=NULL, byDE=FALSE, nr,
     p <- p + geom_node_text(aes_(label=~name), size=3, data = p$data[1:n,]) +
         scale_color_gradientn(name = "pval", colors=palette, na.value = genesColor )
     return(p)
- }
+}
+
+
 # Plot para plotear cnet para GO ###############
 customCnetGoReport <- function(gos, category=NULL, nTerm=NULL, byDE=FALSE, ont="BP"){
     if(! "ggraph" %in% .packages()) require("ggraph")
@@ -1274,17 +1276,17 @@ heatmapKeggLogFCReport <- function(kdt, res, nr){
     kdt <- kdt[nr, ]
     kk <- kdt %>% dplyr::select(Pathway, genes) %>% separate_rows(Pathway, genes, sep=",")
     kk$genes <- gsub(" ", "", kk$genes)
-    resSig <- res[ which(res$GeneName_Symbol %in% kk$genes), ]
-    kk2 <- resSig %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
-    kk3 <- left_join(kk, kk2, by = c("genes"="GeneName_Symbol"))
-    kk3$padj <- format(kk3$padj, scientific = TRUE, digits = 3)
+    resSig <- res[ which(res$SYMBOL %in% kk$genes), ]
+    kk2 <- resSig %>% dplyr::select(SYMBOL, logFC, pval)
+    kk3 <- left_join(kk, kk2, by = c("genes"="SYMBOL"))
+    kk3$pval <- format(kk3$pval, scientific = TRUE, digits = 3)
     yNum <- length(unique(kdt$Pathway))
     if(yNum <=35){ySize=10}else if(yNum>35 | yNum <=50){ySize=8}else{ySize=0}
     xNum <- length(unique(kdt$genes))
     if(xNum <=60){xSize=7}else if(xNum>60 | yNum <=80){xSize=6}else{xSize=0}
     
     kk3 %>% ggplot(aes_(~genes, ~Pathway)) + 
-    geom_tile(aes_(fill = ~log2FoldChange, label= ~padj), color = 'black', size =0.2) +
+    geom_tile(aes_(fill = ~logFC, label= ~pval), color = 'black', size =0.2) +
     xlab(NULL) + ylab(NULL) +
     theme_minimal() +
     theme(panel.grid.major = element_line(colour = "gray88", size = 0.8),
@@ -1292,6 +1294,31 @@ heatmapKeggLogFCReport <- function(kdt, res, nr){
     scale_fill_gradient2(low="blue", mid = "gray88", high="red", name = "Log2FC")+
     # scale_fill_brewer(palette = "YlOrRd")
     # scale_fill_manual(values = getPalette(colourCount))+
+    theme(text = element_text(size=ySize, angle=0), plot.margin = unit(c(15,25,15,15), "pt"))
+}
+heatmapKeggReport <- function(kdt, nr){
+  kdt <- kdt[nr, ]
+  colourCount <- length(unique(kdt$DEG)) # number of levels
+  getPalette <- colorRampPalette(RColorBrewer::brewer.pal(9, "YlOrRd"))
+  kdt <- kdt %>% dplyr::select(Pathway, genes, DEG) %>% 
+    separate_rows(genes) %>%
+    mutate(Pathway = fct_inorder(Pathway)) %>% 
+    mutate(Pathway = fct_rev(Pathway)) %>% 
+    mutate(genes = fct_infreq(genes)) %>% 
+    mutate(DEG = factor(DEG))
+    yNum <- length(unique(kdt$Pathway))
+    if(yNum <=35){ySize=12}else if(yNum>35 | yNum <=50){ySize=10}else{ySize=0}
+    xNum <- length(unique(kdt$genes))
+    if(xNum <=60){xSize=8}else if(xNum>60 | yNum <=80){xSize=7}else{xSize=0}
+    kdt %>% ggplot(aes_(~genes, ~Pathway)) + 
+    geom_tile(aes_(fill = ~DEG), color = 'black', size =0.2) +
+    xlab(NULL) + ylab(NULL) +
+    theme_minimal() +
+    theme(panel.grid.major = element_line(colour = "gray88", size = 0.8),
+          axis.text.x=element_text(angle = 90, hjust = 1, vjust = 0.5, size=xSize))+
+    # scale_fill_continuous(low="blue", high="red", name = "N")
+    # scale_fill_brewer(palette = "YlOrRd")
+    scale_fill_manual(values = getPalette(colourCount))+
     theme(text = element_text(size=ySize, angle=0), plot.margin = unit(c(15,25,15,15), "pt"))
 }
 
@@ -2371,14 +2398,14 @@ krtpReport <- function(res, specie="Mm", pval, fcdown,
   require(karyoploteR)
   fileAnnot <- paste0("./resources/",specie,"/cytoband/",specie,"_annot.txt")
   annot <- read.table(fileAnnot, header = F, sep = "\t")
-  res2 <- res[ res$padj <pval & (res$log2FoldChange<(fcdown) | res$log2FoldChange>fcup),]
+  res2 <- res[ res$pval <pval & (res$logFC<(fcdown) | res$logFC>fcup),]
   res3 <- as.data.frame(res2)
   res3$genes <- rownames(res3)
   genes <- left_join(annot, res3, by = c("V1"="genes"))
-  sig <- which( !is.na(genes$padj) )
+  sig <- which( !is.na(genes$pval) )
   genes <- genes[sig,]
   A <- data.frame(chr = paste0("chr",genes$V2), start = genes$V3,
-                  end=genes$V4, x = genes$V1, y = genes$log2FoldChange)
+                  end=genes$V4, x = genes$V1, y = genes$logFC)
   genesSig <- toGRanges(A)
   one <- getDefaultPlotParams(2)
   one$ideogramheight <- 300
@@ -2501,7 +2528,7 @@ goBarplotReport <- function(enrichGO=NULL, resGO=NULL, genes=NULL,
     names(go2) <- c("Category","ID", "Term", "Genes", "adj_pval")
     #preparar tabla genelist
     names(res)
-    res2 <- res %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
+    res2 <- res %>% dplyr::select(SYMBOL, logFC, pval)
     names(res2) <- c("ID","logFC","adj.P.Val")
     # crear objeto circ
     circ <- circle_dat(go2, res2)
@@ -2517,7 +2544,7 @@ data2circleReport <- function(go=NULL, res=NULL, genes=NULL){
   names(go2) <- c("Category","ID", "Term", "Genes", "adj_pval")
   #preparar tabla genelist
   names(res)
-  res2 <- res %>% dplyr::select(GeneName_Symbol, log2FoldChange, padj)
+  res2 <- res %>% dplyr::select(SYMBOL, logFC, pval)
   names(res2) <- c("ID","logFC","adj.P.Val")
   # crear objeto circ
   require(GOplot)

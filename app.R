@@ -1646,14 +1646,17 @@ output$karyoPlot <- renderPlot({
       removeModal()
       applyPress$ok <- FALSE
       tempReport <- file.path(tempdir(), "report.Rmd")
-      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      if( dim(data$df)[2]==5 ){
+      file.copy("report.Rmd", tempReport, overwrite = TRUE) }else{
+        file.copy("report1col.Rmd", tempReport, overwrite = TRUE)
+      }
       file.copy("mystyle.css", file.path(tempdir(), "mystyle.css"), overwrite = TRUE)
       file.copy("utilsReport.R", file.path(tempdir(),"utils.R"), overwrite = TRUE)
       file.copy("resources/", tempdir(), overwrite = TRUE, recursive = TRUE)
       file.copy("resources/dna-svg-small-13.gif",
       file.path(tempdir(), "resources/dna-svg-small-13.gif"), overwrite = TRUE)
       ## inicializar variables preview
-      volcObj <- maObj <- FALSE
+      volcObj <- karyObj <- FALSE
       ## inicializar variables kegg
       tablekgaObj <- barkgaObj <- chorkgaObj <- dotkgaObj <- heatkgaObj <- netkgaObj <- FALSE
       tablekguObj <- barkguObj <- chorkguObj <- dotkguObj <- heatkguObj <- netkguObj <- FALSE
@@ -1664,30 +1667,11 @@ output$karyoPlot <- renderPlot({
       tablegodObj <- bargodObj <- dotgodObj <- gobargodObj <- gocirclegodObj <- FALSE
       ## inicializar variables GSEA
       tablegseaObj <- plotgseaObj <- FALSE 
-      ## Asigna variables
-          #rlogdatos <- rlog$datos; colorespca <- coloresPCA$colores();
-          # variables <- variables(); samplename <- samplename() 
-          # vsddata <- vsd$data; boxplotswitch <- boxplotswitch()
-          #specie <- specie(); numheatmap <- numheatmap()
-          # ressh <- res$sh; datosdds <- datos$dds; gene <- gene(); 
-          #genesvolcano <- genesVolcano();
-          #upcolor <- input$upColor; downcolor <- input$downColor
-          #kggall <- kgg$all; genesdeup <- numgenesDE$up; genesdedown <- numgenesDE$down
-          # kggdtall <- kggDT$all; datagenesup <- data$genesUp; datagenesdown <- data$genesDown
-          # typebarkeggall <- typeBarKeggAll()
-          # typebarbpall <- typeBarBpAll(); typebarmfall <- typeBarMfAll();
-          # typebarccall <- typeBarCcAll()
-          # kggup <- kgg$up; kggdown <- kgg$down; kggdtup <- kggDT$up; kggdtdown <- kggDT$down; 
-          # goall <- go$all; godtall <- goDT$all; 
-          # goup <- go$up; godtup <- goDT$up; 
-          # godown <- go$down; godtdown <- goDT$down; 
-          bprowsall <- bprowsall(); mfrowsall <- mfrowsall(); ccrowsall <- ccrowsall()
-          bprowsup <- bprowsup(); mfrowsup <- mfrowsup(); ccrowsup <- ccrowsup()
-          bprowsdown <- bprowsdown(); mfrowsdown <- mfrowsdown(); ccrowsdown <- ccrowsdown()
-          gsearow <- gsearow()
-          # gseagsea <- gsea$gsea
-          # textnotes <- input$textNotes
-      #nrows
+      bprowsall <- bprowsall(); mfrowsall <- mfrowsall(); ccrowsall <- ccrowsall()
+      bprowsup <- bprowsup(); mfrowsup <- mfrowsup(); ccrowsup <- ccrowsup()
+      bprowsdown <- bprowsdown(); mfrowsdown <- mfrowsdown(); ccrowsdown <- ccrowsdown()
+      gsearow <- gsearow()
+
           nrowsall <- rowsAll()
           if(!is.null(kggDT$all)){
             if(is.null(nrowsall)){ 
@@ -1708,7 +1692,7 @@ output$karyoPlot <- renderPlot({
           }
       if(!is.null(vals$preview)){      #para preview
         if("Volcano" %in% vals$preview){volcObj <- TRUE}
-        if("MA" %in% vals$preview){ maObj <- TRUE}
+        if("Karyoplot" %in% vals$preview){ karyObj <- TRUE}
       }
       if(!is.null(vals$keggAll)){ #para keggAll
         if("Table" %in% vals$keggAll){ tablekgaObj <- TRUE }
@@ -1760,12 +1744,12 @@ output$karyoPlot <- renderPlot({
         if("GSEA plot" %in% vals$GSEA){ plotgseaObj <- TRUE}
         }
 
-      params <- list( values = vals, 
+      params <- list( values = vals, datadf = data$df,
                      specie = specie(), padj =padj(), logfc = logfc(),
                      volcObj = volcObj, genesvolcano = genesVolcano(), 
                      upcolor = input$upColor, downcolor = input$downColor, 
-                     maObj = maObj,
-                     datagenesup = data$genesUp, datagenesdown = data$genesDown,
+                     karyObj = karyObj,
+                     datagenesup = genes$Up, datagenesdown = genes$Down,
                      tablekgaObj = tablekgaObj, kggall = kgg$all, genesdedown = numgenesDE$down,
                      genesdeup = numgenesDE$up, kggdtall = kggDT$all,
                      barkgaObj = barkgaObj, nrowsall = nrowsall, typebarkeggall = typeBarKeggAll(),

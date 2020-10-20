@@ -2681,10 +2681,8 @@ visnetLegend <- function(kggDT = NULL, rows = NULL){
                            individual = TRUE,
                            inputId = "modalPreview",
                            label = "Select preview elements to report",
-                           choices = c("PCA", "BoxPlot", "Heatmap", "Cluster","Top6",
-                                       "Top1", "Karyoplot","Volcano","MA"),
-                           selected = c("PCA", "BoxPlot", "Heatmap", "Cluster","Top6",
-                                       "Top1", "Karyoplot","Volcano","MA"),
+                           choices = c("Karyoplot","Volcano"),
+                           selected = c("Karyoplot","Volcano"),
                            status = "primary",
                            checkIcon = list(
                                yes = icon("ok",
@@ -2854,8 +2852,8 @@ popupModal1 <- function() {
                            individual = TRUE,
                            inputId = "modalGOAll",
                            label = "Select elements to report GO All",
-                           choices = c("Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
-                           selected = c("Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
+                           choices = c("Table", "Barplot", "Dotplot"),
+                           selected = c("Table", "Barplot", "Dotplot"),
                            status = "primary",
                            checkIcon = list(
                                yes = icon("ok",
