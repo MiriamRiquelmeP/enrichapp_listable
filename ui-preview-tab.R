@@ -54,58 +54,14 @@ fluidPage(
     column(
         width = 5,
         offset = 1,
-        tabBox(
-            width = 12,
-            # title = "Biological context",
-            # solidHeader = FALSE,
-            # status = "primary",
-            # width = 12,
-            tabPanel(
-                title = "Biological Context",
-                circleButton(
-                    inputId = "info1",
-                    icon = icon("info"),
-                    size = "xs",
-                    status = "primary"
-                ),
-                bsTooltip(
-                    "info1",
-                    "Enter free text explaining biological experiment.",
-                    trigger = "hover",
-                    placement = "right"
-                ),
-                textAreaInput(
-                    "biologicalText",
-                    label = NULL,
-                    resize = NULL
-                    #width = "100%",
-                    #height = "258px"
-                )
-            ),
-            # tabpanel
-            tabPanel(
-                title = "Experiment results / Statistics",
-                circleButton(
-                  inputId = "info2",
-                  icon = icon("info"),
-                  size = "xs",
-                  status = "primary"
-                ),
-                bsTooltip(
-                  "info2",
-                  paste0("Enter free text explaining the results obtained here",
-                  " or the statistical value selected."),
-                  trigger = "hover",
-                  placement = "right"
-                ),
-                textAreaInput(
-                    "explainPreview",
-                    label = NULL,
-                    resize = NULL
-                    #width = "100%",
-                    #height = "258px"
-                ) #texarea
-            ) #tabpanel
+        box(
+          width = 12,
+          status = "info",
+          h3("Don't leave me this way. The Communards"),
+          p("Don't, don't you leave me this way"),
+          p("No don't you understand i'm at your command"),
+          p("Oh baby please, please, don't leave me this way ... nooo baby"),
+          p("Don't leave me this way,...")
         ) #tabbox
     ) #column
     ), 
@@ -117,58 +73,6 @@ fluidPage(
                   width = NULL,
                 tagList(
                     tags$p("Volcano plots color scheme"),
-             #    spectrumInput(
-             #     inputId = "logfcColor",
-             #     label = "Pick log FC color:",
-             #     selected = '#2ca25f',
-             #     width = "60%",
-             #     choices = list(
-             #         list("#b30000","#e34a33","#fc8d59","#fdbb84","#fdd49e","#fef0d9"),
-             #         list('#045a8d','#2b8cbe','#74a9cf','#a6bddb','#d0d1e6','#f1eef6'),
-             #         list('#006d2c', '#2ca25f', '#66c2a4', '#99d8c9', '#ccece6','#edf8fb'),
-             #         list('#252525', '#636363', '#969696', '#bdbdbd', '#d9d9d9', '#f7f7f7')
-             #     ),
-             #     options = list(`toggle-palette-more-text` = "Show more")
-             # ),
-             #              spectrumInput(
-             #     inputId = "padjColor",
-             #     label = "Pick p-val color:",
-             #     selected = '#2b8cbe',
-             #     width = "60%",
-             #     choices = list(
-             #         list("#b30000","#e34a33","#fc8d59","#fdbb84","#fdd49e","#fef0d9"),
-             #         list('#045a8d','#2b8cbe','#74a9cf','#a6bddb','#d0d1e6','#f1eef6'),
-             #         list('#006d2c', '#2ca25f', '#66c2a4', '#99d8c9', '#ccece6','#edf8fb'),
-             #         list('#252525', '#636363', '#969696', '#bdbdbd', '#d9d9d9', '#f7f7f7')
-             #     ),
-             #     options = list(`toggle-palette-more-text` = "Show more")
-             # ),
-             #              spectrumInput(
-             #     inputId = "bothColor",
-             #     label = "Pick logFC & p-pval color:",
-             #     selected = "#e34a33",
-             #     width = "60%",
-             #     choices = list(
-             #         list("#b30000","#e34a33","#fc8d59","#fdbb84","#fdd49e","#fef0d9"),
-             #         list('#045a8d','#2b8cbe','#74a9cf','#a6bddb','#d0d1e6','#f1eef6'),
-             #         list('#006d2c', '#2ca25f', '#66c2a4', '#99d8c9', '#ccece6','#edf8fb'),
-             #         list('#252525', '#636363', '#969696', '#bdbdbd', '#d9d9d9', '#f7f7f7')
-             #     ),
-             #     options = list(`toggle-palette-more-text` = "Show more")
-             # ),
-             #              spectrumInput(
-             #     inputId = "nsColor",
-             #     label = "Pick no significant color:",
-             #     selected = '#969696',
-             #     width = "60%",
-             #     choices = list(
-             #         list("#b30000","#e34a33","#fc8d59","#fdbb84","#fdd49e","#fef0d9"),
-             #         list('#045a8d','#2b8cbe','#74a9cf','#a6bddb','#d0d1e6','#f1eef6'),
-             #         list('#006d2c', '#2ca25f', '#66c2a4', '#99d8c9', '#ccece6','#edf8fb'),
-             #         list('#252525', '#636363', '#969696', '#bdbdbd', '#d9d9d9', '#f7f7f7')
-             #     ),
-             #     options = list(`toggle-palette-more-text` = "Show more")
-             # ),
              spectrumInput(
                  inputId = "upColor",
                  label = "Pick upregulated color:",

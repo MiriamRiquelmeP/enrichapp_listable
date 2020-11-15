@@ -10,14 +10,15 @@ fluidPage(
                              column(
                                  width = 3,
                                  box(
-                                     title = "GO BP description",
-                                     solidHeader = FALSE,
-                                     status = "primary",
-                                     width = NULL,
-                                     textAreaInput("GObpText",
-                                                   label = "",
-                                                   resize = NULL)
-                                 ) # fin caja para el texto
+                                   width = 12,
+                                   status = "info",
+                                   h3("Voyage Voyage. Desireless"),
+                                   p("Au dessus des vieux volcans"),
+                                   p("Glissent des ailes sous les tapis du vent"),
+                                   p("Voyage, voyage"),
+                                   p("Éternellement,..."),
+                                   p("De nuages en marécages")
+                                 ) #tabbox
                              ),
                              column(
                                  width = 9,
@@ -73,16 +74,16 @@ fluidPage(
             tabPanel("Molecular function",  # MF all
              fluidRow(  # primera fila mf all 
                 column( width = 3,
-                    box(title = "GO MF description",
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "GOmfText",
-                            label = "",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                          width = 12,
+                          status = "info",
+                          h3("Voyage Voyage. Desireless"),
+                          p("Au dessus des vieux volcans"),
+                          p("Glissent des ailes sous les tapis du vent"),
+                          p("Voyage, voyage"),
+                          p("Éternellement,..."),
+                          p("De nuages en marécages")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Molecular function terms",
@@ -136,16 +137,16 @@ fluidPage(
                 tabPanel("Cellular component",   ##tab CC all
                 fluidRow(  # primera fila all CC
                     column( width = 3,
-                        box(title = "GO CC description",
-                            solidHeader = FALSE,
-                            status = "primary",
-                            width = NULL, 
-                            textAreaInput(
-                                "GOccText",
-                                label = "",
-                                resize = NULL
-                            )
-                        ) # fin caja para el texto
+                            box(
+                              width = 12,
+                              status = "info",
+                              h3("Voyage Voyage. Desireless"),
+                              p("Au dessus des vieux volcans"),
+                              p("Glissent des ailes sous les tapis du vent"),
+                              p("Voyage, voyage"),
+                              p("Éternellement,..."),
+                              p("De nuages en marécages")
+                            ) #tabbox
                     ),
                 column( width = 9,
                     box(title = "Cellular component terms",
@@ -205,16 +206,16 @@ fluidPage(
              tabPanel("Biological Proccess",
             fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "GO BP description",
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "GOBpUpText",
-                            label = "",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                          width = 12,
+                          status = "info",
+                          h3("It's my life. Bon Jovi"),
+                          p("It's my life"),
+                          p("It's now or never"),
+                          p("I ain't gonna live forever"),
+                          p("I just want to live while I'm alive"),
+                          p("My heart is like an open highway...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Biological proccess terms",
@@ -247,16 +248,16 @@ fluidPage(
 tabPanel("Molecular function",
 fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "GO MF description",
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "GOMfUpText",
-                            label = "",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                          width = 12,
+                          status = "info",
+                          h3("It's my life. Bon Jovi"),
+                          p("It's my life"),
+                          p("It's now or never"),
+                          p("I ain't gonna live forever"),
+                          p("I just want to live while I'm alive"),
+                          p("My heart is like an open highway...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Molecular function terms",
@@ -289,16 +290,16 @@ fluidRow(  # primera fila
         tabPanel("Cellular component",
             fluidRow(  # primera fila
                         column( width = 3,
-                            box(title = "GO CC description",
-                                solidHeader = FALSE,
-                                status = "primary",
-                                width = NULL, 
-                                textAreaInput(
-                                    "GOCcUpText",
-                                    label = "",
-                                    resize = NULL
-                                )
-                            ) # fin caja para el texto
+                                box(
+                                  width = 12,
+                                  status = "info",
+                                  h3("It's my life. Bon Jovi"),
+                                  p("It's my life"),
+                                  p("It's now or never"),
+                                  p("I ain't gonna live forever"),
+                                  p("I just want to live while I'm alive"),
+                                  p("My heart is like an open highway...")
+                                ) #tabbox
                         ),
                         column( width = 9,
                             box(title = "Cellular component terms",
@@ -335,16 +336,16 @@ fluidRow(  # primera fila
                 tabPanel( "Biological proccess",
             fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "GO BP description",
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "GOBpDownText",
-                            label = "",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                          width = 12,
+                          status = "info",
+                          h3("I gotta feeling. Black eyed peas"),
+                          p("I gotta feeling"),
+                          p("That tonight's gonna be a good night"),
+                          p("That tonight's gonna be a good night"),
+                          p("I just want to live while I'm alive"),
+                          p("That tonight's gonna be a good, good night...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Biological proccess terms",
@@ -377,16 +378,16 @@ fluidRow(  # primera fila
         tabPanel( "Molecular function",
             fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "GO MF description",
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "GOMfDownText",
-                            label = "",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                          width = 12,
+                          status = "info",
+                          h3("I gotta feeling. Black eyed peas"),
+                          p("I gotta feeling"),
+                          p("That tonight's gonna be a good night"),
+                          p("That tonight's gonna be a good night"),
+                          p("I just want to live while I'm alive"),
+                          p("That tonight's gonna be a good, good night...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Molecular functions terms",
@@ -419,16 +420,16 @@ fluidRow(  # primera fila
                 tabPanel("Cellular component",
                 fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "GO CC description",
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "GOCcDownText",
-                            label = "",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                          width = 12,
+                          status = "info",
+                          h3("I gotta feeling. Black eyed peas"),
+                          p("I gotta feeling"),
+                          p("That tonight's gonna be a good night"),
+                          p("That tonight's gonna be a good night"),
+                          p("I just want to live while I'm alive"),
+                          p("That tonight's gonna be a good, good night...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Cellular component terms",

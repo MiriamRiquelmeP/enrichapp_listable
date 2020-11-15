@@ -4,29 +4,15 @@ fluidPage(
             tags$br(),
             fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "Kegg description",
-                        circleButton(
-                            inputId = "information8",
-                            icon = icon("info"),
-                            size = "xs",
-                            status = "primary"
-                        ),
-                        bsTooltip(
-                            "information8",
-                            paste0("Enter free text explaining the results",
-                            " obtained here or the data selected"),
-                            trigger = "hover",
-                            placement = "right"
-                        ),
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "keggAllText",
-                            label = "Kegg all genes",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                            width = 12,
+                            status = "info",
+                            h3("I want to break free. Queen"),
+                            p("I want to break free from your lies"),
+                            p("You're so self satisfied I dont need you"),
+                            p("I've got to break free"),
+                            p("God knows God knows I want to break free...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Table of pathways",
@@ -116,29 +102,16 @@ fluidPage(
             tags$br(),
             fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "Kegg description",
-                        circleButton(
-                            inputId = "information9",
-                            icon = icon("info"),
-                            size = "xs",
-                            status = "primary"
-                        ),
-                        bsTooltip(
-                            "information9",
-                            paste0("Enter free text explaining the results obtained ",
-                            " here or the data selected"),
-                            trigger = "hover",
-                            placement = "right"
-                        ),
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "keggUpText",
-                            label = "Kegg upregulated genes",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                            width = 12,
+                            status = "info",
+                            h3("I will survive. Gloria Gaynor"),
+                            p("At first I was afraid, I was petrified"),
+                            p("Kept thinking I could never live without you by my side"),
+                            p("But then I spent so many nights thinking how you did me wrong"),
+                            p("And I grew strong"),
+                            p("And I learned how to get along...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Table of pathways",
@@ -212,29 +185,16 @@ fluidPage(
             tags$br(),
             fluidRow(  # primera fila
                 column( width = 3,
-                    box(title = "Kegg description",
-                        circleButton(
-                            inputId = "information10",
-                            icon = icon("info"),
-                            size = "xs",
-                            status = "primary"
-                        ),
-                        bsTooltip(
-                            "information10",
-                            paste0("Enter free text explaining the results ",
-                            "obtained here or the data selected"),
-                            trigger = "hover",
-                            placement = "right"
-                        ),
-                        solidHeader = FALSE,
-                        status = "primary",
-                        width = NULL, 
-                        textAreaInput(
-                            "keggDownText",
-                            label = "Kegg downregulated genes",
-                            resize = NULL
-                        )
-                    ) # fin caja para el texto
+                        box(
+                            width = 12,
+                            status = "info",
+                            h3("Take on me. A-ha"),
+                            p("We're talking away"),
+                            p("I don't know what"),
+                            p("I'm to say I'll say it anyway"),
+                            p("Today's another day to find you"),
+                            p("Shying away...")
+                        ) #tabbox
                 ),
                 column( width = 9,
                     box(title = "Table of pathways",
