@@ -201,7 +201,7 @@ server <- function(input, output, session) {
       <img src='linkedin_little.svg'> 
       </a> <a href='mailto:fernando.perez@ffis.es'> <img src='email.svg'></a><br>
       For any suggestion or bug, please contact us"),
-                 imageUrl = "dna-svg-small-13.gif", 
+                 imageUrl = "dna-svg-small-13.gif",
                  imageWidth = 200, imageHeight = 100, html=TRUE)})
   
   # variables reactivas ######
