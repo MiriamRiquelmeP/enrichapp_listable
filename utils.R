@@ -1465,7 +1465,7 @@ VolcanoMiri <- function(res, padj, fcdown, fcup){
 # Customized Volcano Plot ###############
 CustomVolcano <- function (toptable, lab, x, y, selectLab = NULL, xlim = c(min(toptable[[x]], 
                            na.rm = TRUE), max(toptable[[x]], na.rm = TRUE)), 
-                           ylim = c(0, max(-log10(toptable[[y]]), na.rm = TRUE) ), xlab = bquote(~Log[2] ~ "fold change"), 
+                           ylim = c(0, max(-log10(toptable[[y]])+1, na.rm = TRUE) ), xlab = bquote(~Log[2] ~ "fold change"), 
                            ylab = bquote(~-Log[10] ~ italic(P)), axisLabSize = 18, 
                            title = "Volcano plot highlighting the different groups of signification",
                            subtitle = "", caption = paste0("Total = ", 
@@ -2372,18 +2372,26 @@ customkaryploter <- function(genome = "mm10", plot.type = 1, ideogram.plotter = 
   
   
 krtp <- function(res, specie="Mm", pval, fcdown, 
-                 fcup, bg="white", coldown="#87BEEC", colup="#DC143C"){
+                 fcup, bg="white", coldown="#87BEEC", colup="#DC143C", annotation ){
   require(karyoploteR)
   fileAnnot <- paste0("./resources/",specie,"/cytoband/",specie,"_annot.txt")
   annot <- read.table(fileAnnot, header = F, sep = "\t")
   res2 <- res[ res$pval <pval & (res$logFC<(fcdown) | res$logFC>fcup),]
   res3 <- as.data.frame(res2)
-  res3$genes <- res3$ENSEMBL
-  genes <- left_join(annot, res3, by = c("V1"="genes"))
+  if(annotation=="ensg"){
+    res3$genes <- res3$ENSEMBL
+    genes <- left_join(annot, res3, by = c("V1"="genes"))
+    }
+  if(annotation=="symbol"){
+    res3$genes <- res3$SYMBOL
+    genes <- left_join(annot, res3, by = c("V2"="genes"))
+    }
   sig <- which( !is.na(genes$pval) )
   genes <- genes[sig,]
-  A <- data.frame(chr = paste0("chr",genes$V2), start = genes$V3,
-                  end=genes$V4, x = genes$V1, y = genes$logFC)
+  if(annotation =="ensg"){genesv1 <- genes$V1}
+  if(annotation =="symbol"){genesv1 <- genes$V2}
+  A <- data.frame(chr = paste0("chr",genes$V3), start = genes$V4,
+                  end=genes$V5, x = genesv1, y = genes$logFC)
   genesSig <- toGRanges(A)
   one <- getDefaultPlotParams(2)
   one$ideogramheight <- 300
@@ -2424,8 +2432,14 @@ cytoBandCreate <- function(specie = "Mm"){
   saveRDS(dfRanges, paste0("./resources/",specie,"/cytoband/",specie,"_genomicRanges.Rds"))
   saveRDS(dfIdeoBanda, paste0("./resources/",specie,"/cytoband/",specie,"_cytoBand.Rds"))
   # la anotacion aún no está arreglada, de momento por bash
-  # curl -L ftp://ftp.ensembl.org/pub/release-100/gff3/homo_sapiens/Homo_sapiens.GRCh38.100.chr.gff3.gz >mm10.gtf.gz
-  # zcat mm10.gtf.gz | awk '$3=="gene"{print $1,$4,$5,$9}' | awk 'BEGIN{OFS="\t"}{split($4,a,";");print a[1],$1,$2,$3}' | sed 's/ID=gene://g' >Mm_annot.txt
+  
+  # Para Mus musculus
+  #curl -L ftp://ftp.ensembl.org/pub/release-100/gff3/mus_musculus/Mus_musculus.GRCm38.100.chr.gff3.gz >mm.gtf.gz
+  # zcat mm10.gtf.gz | awk '$3=="gene"{print $1,$4,$5,$9}' | awk 'BEGIN{OFS="\t"}{split($4,a,";");print a[1],a[2],$1,$2,$3}' | sed 's/ID=gene://g' | sed 's/Name=//g' >Mm_annot.txt
+  
+ # Para Homo sapiens
+  # curl -L ftp://ftp.ensembl.org/pub/release-100/gff3/homo_sapiens/Homo_sapiens.GRCh38.100.chr.gff3.gz >hs10.gtf.gz
+  # zcat hs10.gtf.gz | awk '$3=="gene"{print $1,$4,$5,$9}' | awk 'BEGIN{OFS="\t"}{split($4,a,";");print a[1],a[2],$1,$2,$3}' | sed 's/ID=gene://g' | sed 's/Name=//g' >Hs_annot.txt
 }
 # customVisNet #######################################
 customVisNet <- function( enrich, kggDT, nTerm = NULL, up = NULL, down = NULL ){
