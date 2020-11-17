@@ -1465,9 +1465,10 @@ VolcanoMiri <- function(res, padj, fcdown, fcup){
 # Customized Volcano Plot ###############
 CustomVolcano <- function (toptable, lab, x, y, selectLab = NULL, xlim = c(min(toptable[[x]], 
                            na.rm = TRUE), max(toptable[[x]], na.rm = TRUE)), 
-                           ylim = c(0, max(-log10(toptable[[y]]), na.rm = TRUE) + 5), xlab = bquote(~Log[2] ~ "fold change"), 
+                           ylim = c(0, max(-log10(toptable[[y]]), na.rm = TRUE) ), xlab = bquote(~Log[2] ~ "fold change"), 
                            ylab = bquote(~-Log[10] ~ italic(P)), axisLabSize = 18, 
-                           title = "Volcano plot highlighting the different groups of signification", subtitle = "", caption = paste0("Total = ", 
+                           title = "Volcano plot highlighting the different groups of signification",
+                           subtitle = "", caption = paste0("Total = ", 
                            nrow(toptable), " variables"), titleLabSize = 18, subtitleLabSize = 14, 
                            captionLabSize = 14, pCutoff = 1e-05, pLabellingCutoff = pCutoff, 
                            FCcutoffDOWN = -1, FCcutoffUP = 1 , cutoffLineType = "longdash", cutoffLineCol = "black", 
@@ -1757,7 +1758,8 @@ CustomVolcano <- function (toptable, lab, x, y, selectLab = NULL, xlim = c(min(t
     else if (drawConnectors == FALSE && is.null(selectLab)) {
       plot <- plot + geom_label(data = subset(toptable, 
                                 toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN))),
-                                aes(label = subset(toptable, toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN)))[["lab"]]), 
+                                aes(label = subset(toptable, toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) |
+                                                                                                   (toptable[[x]] < FCcutoffDOWN)))[["lab"]]), 
                                 size = labSize, hjust = labhjust, vjust = labvjust, 
                                 colour = labCol, fontface = labFace, na.rm = TRUE)
     }
@@ -2376,7 +2378,7 @@ krtp <- function(res, specie="Mm", pval, fcdown,
   annot <- read.table(fileAnnot, header = F, sep = "\t")
   res2 <- res[ res$pval <pval & (res$logFC<(fcdown) | res$logFC>fcup),]
   res3 <- as.data.frame(res2)
-  res3$genes <- rownames(res3)
+  res3$genes <- res3$ENSEMBL
   genes <- left_join(annot, res3, by = c("V1"="genes"))
   sig <- which( !is.na(genes$pval) )
   genes <- genes[sig,]
