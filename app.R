@@ -36,6 +36,7 @@ source("global.R")
 source("utils.R")
 options(shiny.maxRequestSize = 3000*1024^2)
 
+
 ### HEADER ############ 
 header <- dashboardHeader(title = "Gene list enrichment and report", 
                           titleWidth = 300, 
@@ -44,7 +45,7 @@ header <- dashboardHeader(title = "Gene list enrichment and report",
                                   style="margin-top:8px; margin-right: 5px"),
                           tags$li(class = "dropdown", actionButton("aboutButton", "About"),
                                   style="margin-top:8px; margin-right: 5px")
-)
+                          )
 ### SIDEBAR ##########
 sidebar <- dashboardSidebar(useShinyalert(),
                             useShinyjs(),
@@ -94,13 +95,20 @@ sidebar <- dashboardSidebar(useShinyalert(),
 body <- dashboardBody(
       tags$script(HTML("$('body').addClass('fixed');")),
       add_busy_gif(src="dna-mini.gif", position = "full-page", width = 10, height = 10 ),
-     # tags$head(
-     #   tags$link(rel = "stylesheet", type = "text/css", href = "customDark.css")
-     # ),
-     includeCSS("./www/customDark.css"),
+     #htmltools::includeCSS("./www/customDark.css"),
+      #tags$head(
+        #HTML("<link rel = 'stylesheet' type = 'text/css' href = 'customDark.css'>"),
+      #),
     setShadow(class = "shiny-plot-output"),
     setShadow( class = "box"),
     setShadow( class = "svg-container"),
+    tags$head(
+      HTML("<link rel = 'stylesheet' type = 'text/css' href = 'customDark.css'>"),
+      tags$style(HTML(".irs-min, .irs-max {
+              color: rgb(215,215,215) !important;
+              background-color: rgb(45,55,65) !important;
+          }"))
+      ),
   bsAlert("alert"),
   tabItems(
     # Initial INFO
@@ -616,6 +624,27 @@ server <- function(input, output, session) {
           height = "80%"
       )
   })
+#....................... ####
+## table preview ######################################
+output$tablepreview <- renderDataTable({
+  validate(need(data$df, ""))
+  customButtons <- list(
+        list(extend = "copy", title="Preview table"),
+        list(extend="collection", buttons = c("csv", "excel"),
+             text="Download", filename="coldata", title="Preview table" ) )
+    
+    datatable( data$df, extensions = "Buttons",
+               rownames=FALSE,
+               filter = list(position="top", clear=FALSE),
+               options = list(
+                 dom = "Bfrtipl",
+                 lengthMenu = list(c(10,25,50,100,-1), c(10,25,50,100,"All")),
+                 buttons = customButtons,
+                 list(pageLength = 10, white_space = "normal")
+               )
+    )
+})
+
 # ....................... ####
   # volcano plot #########
   output$volcano <- renderPlot( {
@@ -643,7 +672,7 @@ output$texto1 <- renderTable( digits = -2, {
         xy <- xy()
         xy[,c(2,4,5,6)]
     })
-# ....................... ####
+#....................... ####
 ## karyoplot ######################################
 output$karyoPlot <- renderPlot({
     validate(need(data$df, "Load file to render plot"))

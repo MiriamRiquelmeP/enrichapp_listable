@@ -13,9 +13,18 @@ fluidPage(
     tags$br(),
     fluidRow(
         column(
-            width = 4,
-            offset = 1, 
-            circleButton(
+            width = 5,
+            offset = 0,
+          box(
+          width = 12,
+          status = "info",
+          h3("Don't leave me this way. The Communards"),
+          p("Don't, don't you leave me this way"),
+          p("No don't you understand i'm at your command"),
+          p("Oh baby please, please, don't leave me this way ... nooo baby"),
+          p("Don't leave me this way,...")
+        ), #tabbox
+          circleButton(
                 inputId = "information1",
                 icon = icon("info"),
                 size = "xs",
@@ -37,7 +46,7 @@ fluidPage(
             title = "Cutoff values",
             solidHeader = FALSE,
             status = "primary",
-            width = NULL,
+            width = 12,
             switchInput(inputId = "fc_switch",
                         offLabel = "log2FC",
                         onLabel = "FC",
@@ -50,23 +59,15 @@ fluidPage(
             tags$br(),
             actionButton("applyParam", label = "Click to apply values")
         )
-    ),
+    ), #column
+
     column(
-        width = 5,
-        offset = 1,
-        box(
-          width = 12,
-          status = "info",
-          h3("Don't leave me this way. The Communards"),
-          p("Don't, don't you leave me this way"),
-          p("No don't you understand i'm at your command"),
-          p("Oh baby please, please, don't leave me this way ... nooo baby"),
-          p("Don't leave me this way,...")
-        ) #tabbox
-    ) #column
+      width = 6,
+      box(width=12,
+        dataTableOutput("tablepreview")
+      )
+    )
     ), 
-
-
   fluidRow(
       column(width = 3,
              box( title = "Customize plots",
