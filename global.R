@@ -40,10 +40,10 @@ formatData <- function(genelist, specie, annotation){
         ensdb <- EnsDb.Hsapiens.v86
         orgdb <- org.Hs.eg.db
     }
-  genelist[[ann]] <- toupper(genelist[[ann]]) # todo a mayusculas
-  if( ann=="SYMBOL" & (specie == "Mm" | specie == "Rn") ){ # si es symbol y mouse o rattus a capital
-    genelist[[ann]] <- stringr::str_to_title(genelist[[ann]])
-    }
+  # genelist[[ann]] <- toupper(genelist[[ann]]) # todo a mayusculas
+  # if( ann=="SYMBOL" & (specie == "Mm" | specie == "Rn") ){ # si es symbol y mouse o rattus a capital
+  #   genelist[[ann]] <- stringr::str_to_title(genelist[[ann]])
+  #   }
   annot <- NULL
   genes <- genelist[[ann]]
   if(ann=="ENSEMBL"){

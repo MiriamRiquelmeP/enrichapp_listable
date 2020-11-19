@@ -38,7 +38,7 @@ options(shiny.maxRequestSize = 3000*1024^2)
 
 
 ### HEADER ############ 
-header <- dashboardHeader(title = "Gene list enrichment and report", 
+header <- dashboardHeader(title = "Gene list enrichment", 
                           titleWidth = 300, 
                           dropdownMenuOutput("messageMenu"),
                           tags$li(class="dropdown", actionButton("notesButton","Notes"),
@@ -88,7 +88,16 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                     fluidRow(column(12, align = "center", offset=0,
                                                     uiOutput("report")))))
                                 
-                            ), style = "position: absolute; bottom:0;width:100%;")
+                            ),
+                            tags$a(href='https://www.cea.fr/', target="_blank",
+                                   tags$img(src='cea.png',width='40%',
+                                            style="padding: 5px; float: left;") ),
+                            tags$a(href='https://www.imib.es/', target="_blank",
+                                   tags$img(src='imib.png',width='50%',
+                                            style="padding: 5px; float: right;") ),
+                            
+                            style = "position: absolute; bottom:0;width:100%;")
+                            
                             )
 
 ### BODY ###############
