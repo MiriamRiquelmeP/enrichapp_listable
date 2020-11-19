@@ -89,16 +89,16 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                                     uiOutput("report")))))
                                 
                             ),
-                            tags$a(href='https://www.cea.fr/', target="_blank",
-                                   tags$img(src='cea.png',width='40%',
-                                            style="padding: 5px; float: left;") ),
-                            tags$a(href='https://www.imib.es/', target="_blank",
+                            tags$a(href='https://jacob.cea.fr/drf/ifrancoisjacob/Pages/Departements/MIRCen/themes/astrocytes-reactifs-biomarqueurs-imagerie-cibles-therapeutiques.aspx', target="_blank",
+                                   tags$img(src='mircen.png',width='50%',
+                                            style="padding: 5px; position: absolute; bottom:10px; left:0") ),
+                            tags$a(href='http://www.bioinformatica.imib.es', target="_blank",
                                    tags$img(src='imib.png',width='50%',
                                             style="padding: 5px; float: right;") ),
                             
-                            style = "position: absolute; bottom:0;width:100%;")
-                            
-                            )
+                            style = "position: absolute; bottom:0;width:100%;"
+                            ) #fin div
+                            ) # fin sideDashBoard
 
 ### BODY ###############
 body <- dashboardBody(
