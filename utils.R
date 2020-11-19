@@ -1690,14 +1690,21 @@ CustomVolcano <- function (toptable, lab, x, y, selectLab = NULL, xlim = c(min(t
   }
   if (boxedLabels == FALSE) {
     if (drawConnectors == TRUE && is.null(selectLab)) {
-      plot <- plot + geom_text_repel(data = subset(toptable, 
-                  toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN))),
-                  aes(label = subset(toptable, toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN)))[["lab"]]), 
-                  size = labSize, segment.color = colConnectors, 
-                  segment.size = widthConnectors, arrow = arrow(length = lengthConnectors, 
-                                     type = typeConnectors, ends = endsConnectors), 
-                                     hjust = labhjust, vjust = labvjust, colour = labCol, 
-                                     fontface = labFace, na.rm = TRUE)
+      plot <- plot + geom_text(data = subset(toptable, 
+                                             toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN))), 
+                               aes(label = subset(toptable, toptable[[y]] < 
+                                                    pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN)))[["lab"]]), 
+                               size = labSize, check_overlap = TRUE, hjust = labhjust, 
+                               vjust = labvjust, colour = labCol, fontface = labFace, 
+                               na.rm = TRUE)
+      # plot <- plot + geom_text_repel(data = subset(toptable, 
+      #             toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN))),
+      #             aes(label = subset(toptable, toptable[[y]] < pLabellingCutoff & ((toptable[[x]] > FCcutoffUP) | (toptable[[x]] < FCcutoffDOWN)))[["lab"]]), 
+      #             size = labSize, segment.color = colConnectors, 
+      #             segment.size = widthConnectors, arrow = arrow(length = lengthConnectors, 
+      #                                type = typeConnectors, ends = endsConnectors), 
+      #                                hjust = labhjust, vjust = labvjust, colour = labCol, 
+      #                                fontface = labFace, na.rm = TRUE)
     }
     else if (drawConnectors == TRUE && !is.null(selectLab)) {
       plot <- plot + geom_text_repel(data = subset(toptable, 

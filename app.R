@@ -32,6 +32,7 @@ library(scales)
 library(stringr)
 library(shinybusy)
 library(visNetwork)
+library(ggrepel)
 source("global.R")
 source("utils.R")
 options(shiny.maxRequestSize = 3000*1024^2)
@@ -668,6 +669,7 @@ output$tablepreview <- renderDataTable({
                     pCutoff = padj(),
                     FCcutoffUP = logfc()[2],
                     FCcutoffDOWN = logfc()[1],
+                  drawconnectors = TRUE,
                     #xlim = c(-8, 8),
                     col = c("gray", "#7cccc3", "#d99c01", input$upColor, input$downColor))
     })
@@ -677,7 +679,7 @@ xy <- reactive({
   res$`-log10padj` <- (-log10(res$pval)) 
   nearPoints(res, input$plot_click1, xvar = "logFC", yvar = "-log10padj")
 })
-output$texto1 <- renderTable( digits = -2, {
+output$texto1 <- renderTable( digitgeoms = -2, {
         xy <- xy()
         xy[,c(2,4,5,6)]
     })
