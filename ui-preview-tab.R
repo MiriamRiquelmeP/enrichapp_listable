@@ -22,7 +22,8 @@ fluidPage(
           p("Don't, don't you leave me this way"),
           p("No don't you understand i'm at your command"),
           p("Oh baby please, please, don't leave me this way ... nooo baby"),
-          p("Don't leave me this way,...")
+          p("Don't leave me this way,..."),
+          actionButton("morinfo1","morinfo")
         ), #tabbox
           circleButton(
                 inputId = "information1",

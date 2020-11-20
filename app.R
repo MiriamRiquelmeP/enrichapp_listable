@@ -223,6 +223,17 @@ server <- function(input, output, session) {
                  imageUrl = "dna-svg-small-13.gif",
                  imageWidth = 200, imageHeight = 100, html=TRUE)})
   
+    
+    
+  observeEvent(input$morinfo1,{
+    showModal(
+      modalDialog(
+        size="l",
+        tags$iframe(src="pres1.html",  width="850px", height="700px")
+      )
+    )
+  })
+  
   # variables reactivas ######
   annotation <- reactive({input$annotation})
   data <- reactiveValues(df=NULL)
