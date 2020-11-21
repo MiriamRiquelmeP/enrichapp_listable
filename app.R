@@ -229,7 +229,7 @@ server <- function(input, output, session) {
     showModal(
       modalDialog(
         size="l",
-        tags$embed(src="pres1.html",  width="850px", height="700px")
+        tags$iframe(src="https://155.54.120.105/shiny/enrich_listable/pres1.html",  width="850px", height="700px")
       )
     )
   })
