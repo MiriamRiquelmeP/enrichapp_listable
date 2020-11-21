@@ -229,7 +229,7 @@ server <- function(input, output, session) {
     showModal(
       modalDialog(
         size="l",
-        tags$iframe(src="pres1.html",  width="850px", height="700px")
+        tags$embed(src="pres1.html",  width="850px", height="700px")
       )
     )
   })
