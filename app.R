@@ -81,6 +81,9 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                 sidebarMenu("", sidebarMenuOutput("menuGSEA"))
                             ),
                             tags$div(
+                              column(12, align="center",
+                                actionBttn(inputId = "resetbutton",label = "Reset App",style="simple",
+                                           color ="danger")),
                               box(width = 12,
                               
                                 h5(strong("Generate report"), align = 'center'),
@@ -222,7 +225,9 @@ server <- function(input, output, session) {
                  imageUrl = "dna-svg-small-13.gif",
                  imageWidth = 200, imageHeight = 100, html=TRUE)})
   
-    
+    observeEvent(input$resetbutton,{
+      session$reload()
+    })
     
   observeEvent(input$morinfo1,{
     showModal(
