@@ -81,18 +81,16 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                 sidebarMenu("", sidebarMenuOutput("menuGSEA"))
                             ),
                             tags$div(
-                              column(12, align="center",
-                                actionBttn(inputId = "resetbutton",label = "Reset App",style="simple",
-                                           color ="danger")),
                               box(width = 12,
-                              
                                 h5(strong("Generate report"), align = 'center'),
                                 sidebarMenu( 
                                   menuItem(
                                     fluidRow(column(12, align = "center", offset=0,
                                                     uiOutput("report")))))
-                                
                             ),
+                            column(12, align="center",
+                                   actionBttn(inputId = "resetbutton",label = "Reset App",style="simple",
+                                              color ="danger")),
                             tags$a(href='https://jacob.cea.fr/drf/ifrancoisjacob/Pages/Departements/MIRCen/themes/astrocytes-reactifs-biomarqueurs-imagerie-cibles-therapeutiques.aspx', target="_blank",
                                    tags$img(src='mircen.png',width='50%',
                                             style="padding: 5px; position: absolute; bottom:10px; left:0") ),
@@ -700,6 +698,11 @@ output$tablepreview <- DT::renderDT(server=FALSE,{
     )
 })
 
+output$lostgene <- renderText({
+  validate(need(data$df, ""))
+  lost <- length(which(is.na(data$df$ENTREZID)))
+  print(paste0(lost," genes have no ENTREZ Id. This genes will be missing in enrichment analysis" ) )
+})
 # ....................... ####
   # volcano plot #########
   output$volcano <- renderPlot( {
