@@ -239,6 +239,8 @@ server <- function(input, output, session) {
     )
   })
   
+  
+  
   # variables reactivas ######
   annotation <- reactive({input$annotation})
   data <- reactiveValues(df=NULL, dfilt=NULL)
@@ -676,7 +678,7 @@ server <- function(input, output, session) {
   })
 #....................... ####
 ## table preview ######################################
-output$tablepreview <- renderDataTable({
+output$tablepreview <- DT::renderDT(server=FALSE,{
   validate(need(data$df, ""))
   customButtons <- list(
         list(extend = "copy", title="Preview table"),
@@ -689,6 +691,9 @@ output$tablepreview <- renderDataTable({
                options = list(
                  dom = "Bfrtipl",
                  lengthMenu = list(c(10,25,50,100,-1), c(10,25,50,100,"All")),
+                  columnDefs = list(list(orderable = TRUE,
+                                        className = "details-control",
+                                        targets = 1)),
                  buttons = customButtons,
                  list(pageLength = 10, white_space = "normal")
                )
