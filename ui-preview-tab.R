@@ -66,7 +66,9 @@ fluidPage(
       width = 6,
       box(width=12,
         dataTableOutput("tablepreview")
-      )
+      ),
+      box( width=12,
+      textOutput("lostgene"))
     )
     ), 
   fluidRow(
