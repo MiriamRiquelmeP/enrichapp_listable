@@ -744,7 +744,7 @@ output$karyoPlot <- renderPlot({
   # variables KEGG ALL ##########################
   rowsAll <- reactive({input$tableAll_rows_selected})
  # KEGG table all #####################################
-  output$tableAll <- DT::renderDT(server=TRUE,{
+  output$tableAll <- DT::renderDT(server=FALSE,{
     validate(need(kgg$all, "Load file to render table"))
     names(kggDT$all)[names(kggDT$all) == "DE"] <- "DEG"
     names(kggDT$all)[names(kggDT$all) == "P.DE"] <- "p-value"
@@ -853,7 +853,7 @@ output$karyoPlot <- renderPlot({
   # variables KEGG UP ##########################
   rowsUp <- reactive({input$table_rows_selected})
  # KEGG table up #####################################
-  output$table <- DT::renderDT(server=TRUE,{
+  output$table <- DT::renderDT(server=FALSE,{
     validate(need(kgg$up, "Load file to render table"))
     names(kggDT$up)[names(kggDT$up) == "DE"] <- "DEG"
     names(kggDT$up)[names(kggDT$up) == "P.DE"] <- "p-value"
@@ -951,7 +951,7 @@ output$karyoPlot <- renderPlot({
   # variables KEGG Down ##########################
   rowsDown <- reactive({input$tableDown_rows_selected})
  # KEGG table down #####################################
-  output$tableDown <- DT::renderDT(server=TRUE,{
+  output$tableDown <- DT::renderDT(server=FALSE,{
     validate(need(kgg$down, "Load file to render table"))
     names(kggDT$down)[names(kggDT$down) == "DE"] <- "DEG"
     names(kggDT$down)[names(kggDT$down) == "P.DE"] <- "p-value"
@@ -1065,7 +1065,7 @@ output$karyoPlot <- renderPlot({
   
  # ....................... ####
    # GO table BP ALL #####################
-  output$tableBPall <- DT::renderDataTable(server=TRUE,{
+  output$tableBPall <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$all, "Load file to render table"))
     goDT <- goDT$all 
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1133,7 +1133,7 @@ output$karyoPlot <- renderPlot({
   })
   # ...................... #############
   # GO table MF all #####################
-  output$tableMFall <- DT::renderDataTable({
+  output$tableMFall <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$all, "Load file to render table"))
     goDT <- goDT$all
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1204,7 +1204,7 @@ output$karyoPlot <- renderPlot({
   })
   # ............ ###############################
   # GO table CC all #####################
-  output$tableCCall <- DT::renderDataTable(server=TRUE,{
+  output$tableCCall <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$all, "Load file to render table"))
     goDT <- goDT$all
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1275,7 +1275,7 @@ output$karyoPlot <- renderPlot({
   })
   # ............ ###############################
   # GO table BP UP#####################
-  output$tableBP <- DT::renderDataTable(server=TRUE,{
+  output$tableBP <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$up, "Load file to render table"))
     goDT <- goDT$up
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1334,7 +1334,7 @@ output$karyoPlot <- renderPlot({
   })
   # ............ ###############################
   # GO table MF UP #####################
-  output$tableMF <- DT::renderDataTable({
+  output$tableMF <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$up, "Load file to render table"))
     goDT <- goDT$up
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1395,7 +1395,7 @@ output$karyoPlot <- renderPlot({
   })
   # ............ ###############################
   # GO table CC UP #####################
-  output$tableCC <- DT::renderDataTable(server=TRUE,{
+  output$tableCC <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$up, "Load file to render table"))
     goDT <- goDT$up
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1456,7 +1456,7 @@ output$karyoPlot <- renderPlot({
   })
   # ............ ###############################
   # GO table BP DOWN #####################
-  output$tableBPdown <- DT::renderDataTable(server=TRUE,{
+  output$tableBPdown <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$down, "Load file to render table"))
     goDT <- goDT$down
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1516,7 +1516,7 @@ output$karyoPlot <- renderPlot({
   })
   # ............ ###############################
   # GO table MF DOWN #####################
-  output$tableMFdown <- DT::renderDataTable({
+  output$tableMFdown <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$down, "Load file to render table"))
     goDT <- goDT$down
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1577,7 +1577,7 @@ output$karyoPlot <- renderPlot({
   })
   # ............ ###############################
   # GO table CC DOWN #####################
-  output$tableCCdown <- DT::renderDataTable(server=TRUE,{
+  output$tableCCdown <- DT::renderDataTable(server=FALSE,{
     validate(need(goDT$down, "Load file to render table"))
     goDT <- goDT$down
     names(goDT)[names(goDT) == "DE"] <- "DEG"
@@ -1640,7 +1640,7 @@ output$karyoPlot <- renderPlot({
   # variables gsea ################
   gsearow <- reactive({input$gseaTable_rows_selected}) 
     # GSEA table ##########################
-  output$gseaTable <- renderDataTable({
+  output$gseaTable <- renderDataTable(server=FALSE,{
     validate(need(gsea$gsea, "Load file to render table"))
     mygsea <- gsea$gsea
     if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
