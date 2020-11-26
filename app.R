@@ -45,7 +45,12 @@ header <- dashboardHeader(title = "Gene list enrichment",
                           tags$li(class="dropdown", actionButton("notesButton","Notes"),
                                   style="margin-top:8px; margin-right: 5px"),
                           tags$li(class = "dropdown", actionButton("aboutButton", "About"),
-                                  style="margin-top:8px; margin-right: 5px")
+                                  style="margin-top:8px; margin-right: 15px"),
+                          tags$li(class = "dropdown", actionBttn(inputId = "resetbutton",
+                                                                 label = "Reset App", style="simple", size="sm",
+                                                                 color ="danger"),
+                                  style="margin-top:8px; margin-right: 10px"
+                          )
                           )
 ### SIDEBAR ##########
 sidebar <- dashboardSidebar(useShinyalert(),
@@ -88,9 +93,6 @@ sidebar <- dashboardSidebar(useShinyalert(),
                                     fluidRow(column(12, align = "center", offset=0,
                                                     uiOutput("report")))))
                             ),
-                            column(12, align="center",
-                                   actionBttn(inputId = "resetbutton",label = "Reset App",style="simple",
-                                              color ="danger")),
                             tags$a(href='https://jacob.cea.fr/drf/ifrancoisjacob/Pages/Departements/MIRCen/themes/astrocytes-reactifs-biomarqueurs-imagerie-cibles-therapeutiques.aspx', target="_blank",
                                    tags$img(src='mircen.png',width='50%',
                                             style="padding: 5px; position: absolute; bottom:10px; left:0") ),
