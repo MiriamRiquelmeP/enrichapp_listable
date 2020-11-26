@@ -701,7 +701,7 @@ output$tablepreview <- DT::renderDT(server=FALSE,{
 output$lostgene <- renderText({
   validate(need(data$df, ""))
   lost <- length(which(is.na(data$df$ENTREZID)))
-  print(paste0(lost," genes have no ENTREZ Id. This genes will be missing in enrichment analysis" ) )
+  print(paste0(lost," out of ", dim(data$df)[1]," genes have no ENTREZ Id. Theses genes will be missing in enrichment analysis" ) )
 })
 # ....................... ####
   # volcano plot #########
