@@ -60,10 +60,12 @@ fluidPage(
                                      )), # fin fluidRow, column & radioGroupButtons
                                      fluidRow(class = "text-center",
                                               column(
+                                                  width = 9,
                                                   align = "center",
                                                   plotlyOutput("keggPlotAll"),
-                                                  width = 9
-                                              ))),  #barplot
+                                              ),
+                                              downloadButton("downkeggAll","Download SVG")
+                                              )),  #barplot
                         tabPanel(title = "Chordplot",
                                  tagList(fluidRow(column(width = 8,
                                                          chorddiagOutput("keggChordAll",

@@ -33,6 +33,7 @@ library(stringr)
 library(shinybusy)
 library(visNetwork)
 library(ggrepel)
+library(orca)
 source("global.R")
 source("utils.R")
 options(shiny.maxRequestSize = 3000*1024^2)
@@ -262,6 +263,7 @@ server <- function(input, output, session) {
   typeBarKeggAll <- reactive({input$selectkeggall})
   validatedGene <- reactiveValues(list=NULL)
   vals <- reactiveValues()
+  svg <- reactiveValues()
   ## Leer data ##########################
   observeEvent(input$geneButton,{
     # comprobaciones listado manual
@@ -712,7 +714,7 @@ output$lostgene <- renderText({
     validate(need(data$df, "Load file to render plot"))
     res <-  data$df
     #res$`-log10padj` <- (-log10(res$padj)) 
-    CustomVolcano(res, lab = as.character(res$SYMBOL),
+    svg$volcano <- CustomVolcano(res, lab = as.character(res$SYMBOL),
                   selectLab = genesVolcano(),
                     x = 'logFC',
                     y = 'pval',
@@ -722,7 +724,14 @@ output$lostgene <- renderText({
                   drawconnectors = TRUE,
                     #xlim = c(-8, 8),
                     col = c("gray", "#7cccc3", "#d99c01", input$upColor, input$downColor))
+    svg$volcano
     })
+
+output$downVolcano <- downloadHandler(
+  filename = "volcano.svg",
+  content = function(file){
+    ggsave(file, svg$volcano, "svg")}
+)
 
 xy <- reactive({
   res <- data$df
@@ -740,6 +749,16 @@ output$karyoPlot <- renderPlot({
     krtp(data$df, specie = specie(), pval = padj(), fcdown = logfc()[1],
          fcup = logfc()[2], bg="#46505a", coldown="#4ADBFF" , colup="#f7665c", annotation=annotation() )
 })
+
+output$downKrpt <- downloadHandler(
+  filename = "karyoplot.png",
+  content = function(file){
+    png(file)
+    krtp(data$df, specie = specie(), pval = padj(), fcdown = logfc()[1],
+         fcup = logfc()[2], bg="#46505a", coldown="#4ADBFF" , colup="#f7665c", annotation=annotation() )
+    dev.off()
+    }
+)
 # .......................####
   # variables KEGG ALL ##########################
   rowsAll <- reactive({input$tableAll_rows_selected})
@@ -775,15 +794,24 @@ output$karyoPlot <- renderPlot({
         p <- plotKeggAll(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll),
                     genesUp = genes$Up, genesDown = genes$Down,
                     colors = c(input$downColor, input$upColor))
+        svg$keggAll <- p
         if(typeBarKeggAll() == "Dodge"){
             print(p[[1]])   } else if(typeBarKeggAll()=="Stack"){
                 print(p[[2]])} else {print(p[[3]])} 
     } else{  # caso de que sea sólo una lista simple
-        plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = "red")
+        svg$keggAll <- plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = "red")
+        svg$keggAll
             }
         
   })
-  # KEGG chordiag plot all ###############
+
+output$downkeggAll <- downloadHandler(
+  filename = "barkeggall.svg",
+  content = function(file){
+    orca(svg$keggAll, file)}
+)
+
+# KEGG chordiag plot all ###############
   output$keggChordAll <- renderChorddiag({
     validate(need(kgg$all, "Load file to render ChordPlot"))
     rowsAll<- rowsAll()
@@ -882,6 +910,8 @@ output$karyoPlot <- renderPlot({
         }
     plotKegg(enrichdf = kgg$up[rowsUp,], nrows = length(rowsUp), colors = c(input$upColor))
   })
+  
+  
   # KEGG chordiag plot up ###############
   output$keggChord <- renderChorddiag({
     validate(need(kgg$up, "Load file to render ChordPlot"))
