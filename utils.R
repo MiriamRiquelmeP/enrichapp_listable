@@ -940,6 +940,14 @@ plotKegg <- function(enrichdf, nrows = 30, orderby="p-val", colors = NULL){
         } else{ enrichdf <- enrichdf %>% arrange(desc(get(orderby)))}
     }
     enrichdf <- enrichdf[1:nrows,]
+    ## generar ggplot
+    ggp <- enrichdf %>% ggplot(aes(x=DEG, y=pathID, fill=colors))+
+        geom_bar(stat = "identity", position = "identity") +
+        theme(axis.text.y = element_text(angle = 0, hjust = 1)) + theme_bw() +
+        scale_fill_manual(values = colors) +
+        theme(panel.grid.major.y  = element_blank(),
+              axis.title.y = element_blank(), legend.position = "none")
+    ## generar ggplot
     p <- enrichdf %>%
         plot_ly(x=~DEG, y=~pathID, text=~Pathway, type = "bar",
                 marker = list(color=colors),
@@ -948,7 +956,7 @@ plotKegg <- function(enrichdf, nrows = 30, orderby="p-val", colors = NULL){
         layout(margin = list(l=100), yaxis = list(title=""),
                title="Kegg pathways", xaxis = list(tickvals = c(1:max(enrichdf$DEG) ) ) )
         
-    return(p)
+    return(list(p, ggp))
 }
 
 # Plot barras de KeggALL ###################
@@ -990,7 +998,7 @@ plotKeggAll <- function(enrichdf, nrows = 10, orderby = "p-val",
         scale_fill_manual(values = colorfill) +
         theme(panel.grid.major.y  = element_blank(),
               axis.title.y = element_blank())
-    r <- r %>% plotly::ggplotly(tooltip = "all" )
+    #r <- r %>% plotly::ggplotly(tooltip = "all" )
     p <- ggplot(df, aes(fill = Regulation, y = DEG, x = pathId,
                         text =paste0("p-val: ",format(p_val, scientific = T, digits = 4)) )) +
         geom_bar(position = "dodge", stat = "identity") + coord_flip() +
@@ -998,7 +1006,7 @@ plotKeggAll <- function(enrichdf, nrows = 10, orderby = "p-val",
         scale_fill_manual(values = colorfill) +
         theme(panel.grid.major.y  = element_blank(),
               axis.title.y = element_blank())
-    p <- p %>% ggplotly(tooltip = "all")
+    #p <- p %>% ggplotly(tooltip = "all")
     q <- ggplot(df, aes(fill = Regulation, y = DEG, x = pathId, 
                         text =paste0("p-val: ",format(p_val, scientific = T, digits = 4)) )) +
         geom_bar(position = "stack", stat = "identity") + coord_flip() +
@@ -1006,7 +1014,7 @@ plotKeggAll <- function(enrichdf, nrows = 10, orderby = "p-val",
         scale_fill_manual(values = colorfill) +
         theme(panel.grid.major.y  = element_blank(),
               axis.title.y = element_blank())
-    q <- q %>% ggplotly(tooltip = "all")
+    #q <- q %>% ggplotly(tooltip = "all")
 
     return(list(p, q, r))
 }

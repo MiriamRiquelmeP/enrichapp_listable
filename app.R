@@ -33,7 +33,7 @@ library(stringr)
 library(shinybusy)
 library(visNetwork)
 library(ggrepel)
-library(orca)
+library(circlize)
 source("global.R")
 source("utils.R")
 options(shiny.maxRequestSize = 3000*1024^2)
@@ -755,7 +755,8 @@ output$downKrpt <- downloadHandler(
   content = function(file){
     png(file)
     krtp(data$df, specie = specie(), pval = padj(), fcdown = logfc()[1],
-         fcup = logfc()[2], bg="#46505a", coldown="#4ADBFF" , colup="#f7665c", annotation=annotation() )
+         fcup = logfc()[2], bg="#46505a", coldown="#4ADBFF" , colup="#f7665c",
+         annotation=annotation() )
     dev.off()
     }
 )
@@ -794,21 +795,23 @@ output$downKrpt <- downloadHandler(
         p <- plotKeggAll(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll),
                     genesUp = genes$Up, genesDown = genes$Down,
                     colors = c(input$downColor, input$upColor))
-        svg$keggAll <- p
         if(typeBarKeggAll() == "Dodge"){
-            print(p[[1]])   } else if(typeBarKeggAll()=="Stack"){
-                print(p[[2]])} else {print(p[[3]])} 
+            print(p[[1]] %>% plotly::ggplotly(tooltip = "all" ));svg$keggAll <- p[[1]] }
+        else if(typeBarKeggAll()=="Stack"){
+                print( p[[2]] %>% plotly::ggplotly(tooltip = "all" ));svg$keggAll <- p[[2]] }
+        else {print(p[[3]] %>% plotly::ggplotly(tooltip = "all" ));svg$keggAll <- p[[3]] } 
     } else{  # caso de que sea sólo una lista simple
-        svg$keggAll <- plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = "red")
-        svg$keggAll
+        p <- plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = "red")
+        svg$keggAll <- p[[2]] 
+        print(p[[1]])
             }
         
   })
 
-output$downkeggAll <- downloadHandler(
+output$barKeggAll <- downloadHandler(
   filename = "barkeggall.svg",
   content = function(file){
-    orca(svg$keggAll, file)}
+  ggsave(file, svg$keggAll, "svg", width = 10, units = "in") }
 )
 
 # KEGG chordiag plot all ###############
@@ -819,7 +822,9 @@ output$downkeggAll <- downloadHandler(
         if( dim(kgg$all)[1]<10 ){rowsAll <-  seq_len(nrow(kgg$all)) }
         else{ rowsAll <-  seq_len(10)  }
         }
-    chordPlot(kgg$all[rowsAll, ], nRows = length(rowsAll), orderby = "P.DE")
+    p <- chordPlot(kgg$all[rowsAll, ], nRows = length(rowsAll), orderby = "P.DE")
+    svg$chordAll <- list(p$x$matrix, rowsAll)
+    p
   })
  output$legendChorAll <- renderPlot({
     validate(need(kgg$all, "Load file to render ChordPlot"))
@@ -831,22 +836,57 @@ output$downkeggAll <- downloadHandler(
         }
     legendChorplot(kgg$all[rowsAll, ] )
   })
-  # KEGG dotplot UP ################### 
+ # download chorplot All
+ output$chordKeggAll <- downloadHandler(
+  filename = "chordKeggAll.svg",
+  content = function(file){
+    svg(file)
+    chordDiagram(svg$chordAll[[1]], transparency = 0.3, big.gap = 1,
+                 annotationTrack = c("grid"),
+                 grid.col = colorRampPalette( 
+                   RColorBrewer::brewer.pal(11, "Spectral"))(length(svg$chordAll[[2]])) )
+    circos.track(track.index = 1, panel.fun = function(x, y) {
+    circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
+        facing = "clockwise", niceFacing = TRUE, adj = c(0, 3))},
+    bg.border = NA)
+    dev.off()
+     }
+)
+ 
+  # KEGG dotplot All ################### 
   output$keggDotAll <- renderPlot({
     validate(need(kgg$all, "Load file and select to render dotPlot"))
     validate(need(rowsAll(), "Select the paths of interest to render DotPlot"))
     rowsAll <- rowsAll()
     if(is.null(rowsAll)){rowsAll <- c(1:20)}
-    dotPlotkegg(kgg$all[rowsAll,], n = length(rowsAll))
+    p <- dotPlotkegg(kgg$all[rowsAll,], n = length(rowsAll))
+    svg$dotKeggAll <- p
+    print(p)
   })
+  
+  output$dotkeggAll <- downloadHandler(
+    filename = "dotKeggAll.svg",
+    content = function(file){
+    ggsave(file, svg$dotKeggAll, device = "svg", width = 10, units = "in") }
+  )
+
   # KEGG heatmap All #################
   output$heatmapKeggAll <- renderPlotly({
     validate(need(kgg$all, "Load file and select to render Heatmap"))
     validate(need(rowsAll(), "Select the paths of interest to render HeatMap"))
     validate(need(kggDT$all, ""))
-    heatmapKegg(kggDT$all, rowsAll())
+    p <- heatmapKegg(kggDT$all, rowsAll())
+    svg$heatKeggAll <- list(kggDT$all, rowsAll())
+    print(p)
   })
  
+  output$heatkeggAll <- downloadHandler(
+    filename = "heatKeggAll.svg",
+    content = function(file){
+    p <- heatmapKegg(svg$heatKeggAll[[1]],svg$heatKeggAll[[2]] )
+    ggsave(filename= file, plot = p, device = "svg", width = 10, units = "in") }
+  )
+  
 # KEGG cnet All #################
   output$legendAll <- renderPlot({
     validate(need(kgg$all, "Load file and select to render Net Plot"))
@@ -864,7 +904,9 @@ output$downkeggAll <- downloadHandler(
   output$cnetAllKegg <- renderPlot({
     validate(need(kgg$all, "Load file and select to render Net Plot"))
     validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
-    customCnetKegg(kgg$all, rowsAll(), genesUp = data$dfilt, genesDown = NULL)
+    p <- customCnetKegg(kgg$all, rowsAll(), genesUp = data$dfilt, genesDown = NULL)
+    svg$cnetKeggAll <- p
+    print(p)
   })
   output$visnetKeggAll <- renderVisNetwork({
     validate(need(kgg$all, "Load file and select to render Net Plot"))
@@ -877,6 +919,12 @@ output$downkeggAll <- downloadHandler(
                 nodesIdSelection = TRUE)
   })
 
+  output$cnetkeggAll <- downloadHandler(
+    filename = "cnetKeggAll.svg",
+    content = function(file){
+    ggsave(filename = file, plot = svg$cnetKeggAll, device = "svg", width = 10, units = "in") }
+  )
+  
 # ....................... ####
   # variables KEGG UP ##########################
   rowsUp <- reactive({input$table_rows_selected})
