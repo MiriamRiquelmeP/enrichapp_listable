@@ -880,7 +880,7 @@ output$barKeggAll <- downloadHandler(
     print(p)
   })
  
-  output$heatkeggAll <- downloadHandler(
+  output$heatKeggAll <- downloadHandler(
     filename = "heatKeggAll.svg",
     content = function(file){
     p <- heatmapKegg(svg$heatKeggAll[[1]],svg$heatKeggAll[[2]] )
@@ -919,10 +919,10 @@ output$barKeggAll <- downloadHandler(
                 nodesIdSelection = TRUE)
   })
 
-  output$cnetkeggAll <- downloadHandler(
+  output$cnetKeggAll <- downloadHandler(
     filename = "cnetKeggAll.svg",
     content = function(file){
-    ggsave(filename = file, plot = svg$cnetKeggAll, device = "svg", width = 10, units = "in") }
+    ggsave(filename = file, plot = svg$cnetKeggAll, device = "svg", width = 10, height = 10, units = "in") }
   )
   
 # ....................... ####
