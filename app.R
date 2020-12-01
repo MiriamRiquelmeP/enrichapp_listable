@@ -1273,14 +1273,22 @@ output$barKeggAll <- downloadHandler(
           p <- plotGOAll(enrichdf = gosBP[bprowsall, ], nrows = length(bprowsall), ont="BP", 
                     genesUp = genes$Up, genesDown = genes$Down,
                     colors = c(input$downColor, input$upColor))
-          if( typeBarBpAll() == "Dodge") { print(p[[1]]) }
-          else if ( typeBarBpAll() == "Stack") { print(p[[2]]) }
-          else { print(p[[3]]) }
+          if( typeBarBpAll() == "Dodge") { print(p[[1]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barbpall <- p[[1]] }
+          else if ( typeBarBpAll() == "Stack") { print(p[[2]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barbpall <- p[[2]]}
+          else { print(p[[3]])%>% plotly::ggplotly(tooltip = "all" ) ;svg$barbpall <- p[[3]] }
     } else{
-        plotGO(enrichdf = gosBP[bprowsall, ], nrows = length(bprowsall), ont="BP",
+        p <- plotGO(enrichdf = gosBP[bprowsall, ], nrows = length(bprowsall), ont="BP",
                colors = "#045a8d" )
+        svg$barbpall <- p
+        print(p %>% plotly::ggplotly(tooltip = "all" ))
     }
   })
+  
+  output$barBpAll <- downloadHandler(
+    filename = "barbpall.svg",
+    content = function(file){
+      ggsave(file, svg$barbpall, "svg", width = 10, units = "in") }
+  )
   # GO BP dotplot all ################### 
   output$BPDotall <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
@@ -1288,15 +1296,31 @@ output$barKeggAll <- downloadHandler(
     bprowsall <- bprowsall()
     if(is.null(bprowsall)){bprowsall <- c(1:20)}
     gosBP <- go$all[go$all$Ont=="BP",]
-    dotPlotGO(gosBP[bprowsall,], n = length(bprowsall))
+    p <- dotPlotGO(gosBP[bprowsall,], n = length(bprowsall))
+    svg$dotbpall <- p
+    print(p)
   })
+  
+  output$dotBpAll <- downloadHandler(
+    filename = "dotbpall.svg",
+    content = function(file){
+      ggsave(file, svg$dotbpall, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot BP all #######################
   output$gobarplotAllBP <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     bprowsall <- bprowsall()
-    goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
+    p <- goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
               category = "BP", nrows = bprowsall)
+    svg$gobarbpall <- p
+    print(p)
   })
+  
+  output$gobarBpAll <- downloadHandler(
+    filename = "gobarbpall.svg",
+    content = function(file){
+      ggsave(file, svg$gobarbpall, device = "svg", width = 10, units = "in") }
+  )
   # GO circle BP all #####################
   output$goCircleAllBP <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
@@ -1305,9 +1329,16 @@ output$barKeggAll <- downloadHandler(
     bprowsall <- bprowsall()
     if(length(bprowsall)>=4){
       circ <- data2circle(go=go$all[bprowsall, ], res=data$dfilt, genes=genes$all)
-      circle(circ, label.size = 3, nsub = length(bprowsall), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(bprowsall), table.legend = FALSE)
+      svg$cirbpall <- p
+      print(p)
     }
   })
+  output$cirBpAll <- downloadHandler(
+    filename = "cirbpall.svg",
+    content = function(file){
+      ggsave(file, svg$cirbpall, device = "svg", width = 10, units = "in") }
+  )
   # ...................... #############
   # GO table MF all #####################
   output$tableMFall <- DT::renderDataTable(server=FALSE,{
@@ -1343,15 +1374,23 @@ output$barKeggAll <- downloadHandler(
         p <- plotGOAll(enrichdf = gosMF[mfrowsall, ], nrows = length(mfrowsall), ont="MF", 
                        genesUp = genes$Up, genesDown = genes$Down,
                        colors = c(input$downColor, input$upColor))
-        if( typeBarMfAll() == "Dodge") { print(p[[1]]) }
-        else if ( typeBarMfAll() == "Stack") { print(p[[2]]) }
-        else { print(p[[3]]) }
+        if( typeBarMfAll() == "Dodge") { print(p[[1]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barmfall <- p[[1]] }
+        else if ( typeBarMfAll() == "Stack") { print(p[[2]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barmfall <- p[[2]] }
+        else { print(p[[3]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barmfall <- p[[3]] }
     }
     else{
-        plotGO(enrichdf = gosMF[mfrowsall, ], nrows = length(mfrowsall), ont="MF",
+      p <- plotGO(enrichdf = gosMF[mfrowsall, ], nrows = length(mfrowsall), ont="MF",
                colors = "#045a8d" )
+      svg$barmfall <- p
+      print(p %>% plotly::ggplotly(tooltip = "all" ))
     }
   })
+  
+  output$barMfAll <- downloadHandler(
+    filename = "barmfall.svg",
+    content = function(file){
+      ggsave(file, svg$barmfall, "svg", width = 10, units = "in") }
+  )
   # GO MF dotplot all ################### 
   output$MFDotall <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
@@ -1359,15 +1398,31 @@ output$barKeggAll <- downloadHandler(
     mfrowsall <- mfrowsall()
     if(is.null(mfrowsall)){mfrowsall <- c(1:20)}
     gosMF <- go$all[go$all$Ont=="MF",]
-    dotPlotGO(gosMF[mfrowsall,], n = length(mfrowsall))
+    p <- dotPlotGO(gosMF[mfrowsall,], n = length(mfrowsall))
+    svg$dotmfall <- p
+    print(p)
   })
+  
+  output$dotMfAll <- downloadHandler(
+    filename = "dotmfall.svg",
+    content = function(file){
+      ggsave(file, svg$dotmfall, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot MF all ####################
   output$gobarplotAllMF <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     mfrowsall <- mfrowsall()
-    goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
+    p <- goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
               category = "MF", nrows = mfrowsall)
+    svg$gobarmfall <- p
+    print(p)
   })
+  
+  output$gobarMfAll <- downloadHandler(
+    filename = "gobarmfall.svg",
+    content = function(file){
+      ggsave(file, svg$gobarmfall, device = "svg", width = 10, units = "in") }
+  )
   # GO circle MF all #####################
   output$goCircleAllMF <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
@@ -1376,9 +1431,16 @@ output$barKeggAll <- downloadHandler(
     mfrowsall <- mfrowsall()
     if(length(mfrowsall)>=4){
       circ <- data2circle(go=go$all[mfrowsall, ], res=data$dfilt, genes=genes$all)
-      circle(circ, label.size = 3, nsub = length(mfrowsall), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(mfrowsall), table.legend = FALSE)
+      svg$cirmfall <- p
+      print(p)
     }
   })
+  output$cirMfAll <- downloadHandler(
+    filename = "cirmfall.svg",
+    content = function(file){
+      ggsave(file, svg$cirmfall, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table CC all #####################
   output$tableCCall <- DT::renderDataTable(server=FALSE,{
@@ -1414,15 +1476,23 @@ output$barKeggAll <- downloadHandler(
     p <- plotGOAll(enrichdf = gosCC[ccrowsall, ], nrows = length(ccrowsall), ont="CC", 
                    genesUp = genes$Up, genesDown = genes$Down,
                    colors = c(input$downColor, input$upColor))
-    if( typeBarCcAll() == "Dodge") { print(p[[1]]) }
-    else if ( typeBarCcAll() == "Stack") { print(p[[2]]) }
-    else { print(p[[3]]) }
+    if( typeBarCcAll() == "Dodge") {print(p[[1]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barccall <- p[[1]]  }
+    else if ( typeBarCcAll() == "Stack") { print(p[[2]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barccall <- p[[2]]  }
+    else { print(p[[3]]) %>% plotly::ggplotly(tooltip = "all" ) ;svg$barccall <- p[[3]]  }
     }
     else{
-        plotGO(enrichdf = gosCC[ccrowsall, ], nrows = length(ccrowsall), ont="CC",
+        p <- plotGO(enrichdf = gosCC[ccrowsall, ], nrows = length(ccrowsall), ont="CC",
                colors = "#045a8d" )
+        svg$barccall <- p
+        print(p %>% plotly::ggplotly(tooltip = "all" ))
     }
   })
+  
+  output$barCcAll <- downloadHandler(
+    filename = "barccall.svg",
+    content = function(file){
+      ggsave(file, svg$barccall, "svg", width = 10, units = "in") }
+  )
   # GO CC dotplot all ################### 
   output$CCDotall <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
@@ -1430,15 +1500,31 @@ output$barKeggAll <- downloadHandler(
     ccrowsall <- ccrowsall()
     if(is.null(ccrowsall)){ccrowsall <- c(1:20)}
     gosCC <- go$all[go$all$Ont=="CC",]
-    dotPlotGO(gosCC[ccrowsall,], n = length(ccrowsall))
+    p <- dotPlotGO(gosCC[ccrowsall,], n = length(ccrowsall))
+    svg$dotccall <- p
+    print(p)
   })
+  
+  output$dotCcAll <- downloadHandler(
+    filename = "dotccall.svg",
+    content = function(file){
+      ggsave(file, svg$dotccall, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot CC all #######################
   output$gobarplotAllCC <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     ccrowsall <- ccrowsall()
-    goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
+    p <- goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
               category = "CC", nrows = ccrowsall)
+    svg$gobarmfall <- p
+    print(p)
   })
+  
+  output$gobarMfAll <- downloadHandler(
+    filename = "gobarmfall.svg",
+    content = function(file){
+      ggsave(file, svg$gobarmfall, device = "svg", width = 10, units = "in") }
+  )
   # GO circle CC all #####################
   output$goCircleAllCC <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
@@ -1447,9 +1533,16 @@ output$barKeggAll <- downloadHandler(
     ccrowsall <- ccrowsall()
     if(length(ccrowsall)>=4){
       circ <- data2circle(go=go$all[ccrowsall, ], res=data$dfilt, genes=genes$all)
-      circle(circ, label.size = 3, nsub = length(ccrowsall), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(ccrowsall), table.legend = FALSE)
+      svg$circcall <- p
+      print(p)
     }
   })
+  output$cirCcAll <- downloadHandler(
+    filename = "circcall.svg",
+    content = function(file){
+      ggsave(file, svg$circcall, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table BP UP#####################
   output$tableBP <- DT::renderDataTable(server=FALSE,{
@@ -1479,9 +1572,17 @@ output$barKeggAll <- downloadHandler(
     bprowsup <- bprowsup()
     if(is.null(bprowsup)){bprowsup <- c(1:10)}
     gosBP <- go$up[go$up$Ont=="BP",]
-    plotGO(enrichdf = gosBP[bprowsup, ], nrows = length(bprowsup), ont="BP",
+    p <- plotGO(enrichdf = gosBP[bprowsup, ], nrows = length(bprowsup), ont="BP",
            colors = c(input$upColor) )
+    svg$barbpup <- p
+    print(p %>% plotly::ggplotly(tooltip = "all" ))
   })
+  
+  output$barBpUp <- downloadHandler(
+    filename = "barbpup.svg",
+    content = function(file){
+      ggsave(file, svg$barbpup, "svg", width = 10, units = "in") }
+  )
   # GO BP dotplot up ################### 
   output$BPDotUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
@@ -1489,15 +1590,31 @@ output$barKeggAll <- downloadHandler(
     bprowsup <- bprowsup()
     if(is.null(bprowsup)){bprowsup <- c(1:20)}
     gosBP <- go$up[go$up$Ont=="BP",]
-    dotPlotGO(gosBP[bprowsup,], n = length(bprowsup))
+    p <- dotPlotGO(gosBP[bprowsup,], n = length(bprowsup))
+    svg$dotbpup <- p
+    print(p)
   })
+  
+  output$dotBpUp <- downloadHandler(
+    filename = "dotbpup.svg",
+    content = function(file){
+      ggsave(file, svg$dotbpup, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot BP Up #######################
   output$gobarplotUpBP <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     bprowsup <- bprowsup()
-    goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
+    p <- goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
               category = "BP", nrows = bprowsup)
+    svg$gobarbpup <- p
+    print(p)
   })
+  
+  output$gobarBpUp <- downloadHandler(
+    filename = "gobarbpup.svg",
+    content = function(file){
+      ggsave(file, svg$gobarbpup, device = "svg", width = 10, units = "in") }
+  )
     # GO circle BP Up #####################
   output$goCircleUpBP <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
@@ -1506,9 +1623,16 @@ output$barKeggAll <- downloadHandler(
     bprowsup <- bprowsup()
     if(length(bprowsup)>=4){
       circ <- data2circle(go=go$up[bprowsup, ], res=data$dfilt, genes=genes$Up)
-      circle(circ, label.size = 3, nsub = length(bprowsup), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(bprowsup), table.legend = FALSE)
+      svg$cirbpup <- p
+      print(p)
     }
   })
+  output$cirBpUp <- downloadHandler(
+    filename = "cirbpup.svg",
+    content = function(file){
+      ggsave(file, svg$cirbpup, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table MF UP #####################
   output$tableMF <- DT::renderDataTable(server=FALSE,{
@@ -1540,9 +1664,17 @@ output$barKeggAll <- downloadHandler(
     mfrowsup <- mfrowsup()
     if(is.null(mfrowsup)){mfrowsup <- c(1:10)}
     gosMF <- go$up[go$up$Ont=="MF",]
-    plotGO(enrichdf = gosMF[mfrowsup, ], nrows = length(mfrowsup), ont = "MF",
+    p <- plotGO(enrichdf = gosMF[mfrowsup, ], nrows = length(mfrowsup), ont = "MF",
            colors = c(input$upColor) )
+    svg$barmfup <- p
+    print(p %>% plotly::ggplotly(tooltip = "all" ))
   })
+  
+  output$barMfUp <- downloadHandler(
+    filename = "barmfup.svg",
+    content = function(file){
+      ggsave(file, svg$barmfup, "svg", width = 10, units = "in") }
+  )
   # GO MF dotplot up ################### 
   output$MFDotUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
@@ -1550,15 +1682,31 @@ output$barKeggAll <- downloadHandler(
     mfrowsup <- mfrowsup()
     if(is.null(mfrowsup)){mfrowsup <- c(1:20)}
     gosMF <- go$up[go$up$Ont=="MF",]
-    dotPlotGO(gosMF[mfrowsup,], n = length(mfrowsup))
+    p <- dotPlotGO(gosMF[mfrowsup,], n = length(mfrowsup))
+    svg$dotmfup <- p
+    print(p)
   })
+  
+  output$dotMfUp <- downloadHandler(
+    filename = "dotmfup.svg",
+    content = function(file){
+      ggsave(file, svg$dotmfup, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot MF Up #######################
   output$gobarplotUpMF <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     mfrowsup <- mfrowsup()
-    goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
+    p <- goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
               category = "MF", nrows = mfrowsup)
+    svg$gobarmfup <- p
+    print(p)
   })
+  
+  output$gobarMfUp <- downloadHandler(
+    filename = "gobarmfup.svg",
+    content = function(file){
+      ggsave(file, svg$gobarmfup, device = "svg", width = 10, units = "in") }
+  )
   # GO circle MF Up #####################
   output$goCircleUpMF <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
@@ -1567,9 +1715,16 @@ output$barKeggAll <- downloadHandler(
     mfrowsup <- mfrowsup()
     if(length(mfrowsup)>=4){
       circ <- data2circle(go=go$up[mfrowsup, ], res=data$dfilt, genes=genes$Up)
-      circle(circ, label.size = 3, nsub = length(mfrowsup), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(mfrowsup), table.legend = FALSE)
+      svg$cirmfup <- p
+      print(p)
     }
   })
+  output$cirMfUp <- downloadHandler(
+    filename = "cirmfup.svg",
+    content = function(file){
+      ggsave(file, svg$cirmfup, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table CC UP #####################
   output$tableCC <- DT::renderDataTable(server=FALSE,{
@@ -1601,9 +1756,17 @@ output$barKeggAll <- downloadHandler(
     ccrowsup <- ccrowsup()
     if(is.null(ccrowsup)){ccrowsup <- c(1:10)}
     gosCC <- go$up[go$up$Ont=="CC",]
-    plotGO(enrichdf = gosCC[ccrowsup,], nrows = length(ccrowsup), ont="CC",
+    p <- plotGO(enrichdf = gosCC[ccrowsup,], nrows = length(ccrowsup), ont="CC",
            colors = c(input$upColor))
+    svg$barccup <- p
+    print(p %>% plotly::ggplotly(tooltip = "all" ))
   })
+  
+  output$barCcUp <- downloadHandler(
+    filename = "barccup.svg",
+    content = function(file){
+      ggsave(file, svg$barccup, "svg", width = 10, units = "in") }
+  )
   # GO CC dotplot up ################### 
   output$CCDotUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
@@ -1611,15 +1774,31 @@ output$barKeggAll <- downloadHandler(
     ccrowsup <- ccrowsup()
     if(is.null(ccrowsup)){ccrowsup <- c(1:20)}
     gosCC <- go$up[go$up$Ont=="CC",]
-    dotPlotGO(gosCC[ccrowsup,], n = length(ccrowsup))
+    p <- dotPlotGO(gosCC[ccrowsup,], n = length(ccrowsup))
+    svg$dotccup <- p
+    print(p)
   })
+  
+  output$dotCcUp <- downloadHandler(
+    filename = "dotccup.svg",
+    content = function(file){
+      ggsave(file, svg$dotccup, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot CC Up #######################
   output$gobarplotUpCC <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     ccrowsup <- ccrowsup()
     goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
               category = "CC", nrows = ccrowsup)
+    svg$gobarccup <- p
+    print(p)
   })
+  
+  output$gobarCcUp <- downloadHandler(
+    filename = "gobarccup.svg",
+    content = function(file){
+      ggsave(file, svg$gobarccup, device = "svg", width = 10, units = "in") }
+  )
   # GO circle CC Up #####################
   output$goCircleUpCC <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
@@ -1628,9 +1807,16 @@ output$barKeggAll <- downloadHandler(
     ccrowsup <- ccrowsup()
     if(length(ccrowsup)>=4){
       circ <- data2circle(go=go$up[ccrowsup, ], res=data$dfilt, genes=genes$Up)
-      circle(circ, label.size = 3, nsub = length(ccrowsup), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(ccrowsup), table.legend = FALSE)
+      svg$circcup <- p
+      print(p)
     }
   })
+  output$cirCcUp <- downloadHandler(
+    filename = "circcup.svg",
+    content = function(file){
+      ggsave(file, svg$circcup, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table BP DOWN #####################
   output$tableBPdown <- DT::renderDataTable(server=FALSE,{
@@ -1661,9 +1847,18 @@ output$barKeggAll <- downloadHandler(
     bprowsdown <- bprowsdown()
     if(is.null(bprowsdown)){bprowsdown <- c(1:10)}
     gosBP <- go$down[go$down$Ont=="BP",]
-    plotGO(enrichdf = gosBP[bprowsdown, ], nrows = length(bprowsdown), ont="BP",
+    p <- plotGO(enrichdf = gosBP[bprowsdown, ], nrows = length(bprowsdown), ont="BP",
            colors = c(input$downColor))
+    svg$barbpdown <- p
+    print(p %>% plotly::ggplotly(tooltip = "all" ))
   })
+  
+  output$barBpDown <- downloadHandler(
+    filename = "barbpdown.svg",
+    content = function(file){
+      ggsave(file, svg$barbpdown, "svg", width = 10, units = "in") }
+  )
+  
   # GO BP dotplot down ################### 
   output$BPDotDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
@@ -1671,15 +1866,31 @@ output$barKeggAll <- downloadHandler(
     bprowsdown <- bprowsdown()
     if(is.null(bprowsdown)){bprowsdown <- c(1:20)}
     gosBP <- go$down[go$down$Ont=="BP",]
-    dotPlotGO(gosBP[bprowsdown,], n = length(bprowsdown))
+    p <- dotPlotGO(gosBP[bprowsdown,], n = length(bprowsdown))
+    svg$dotbpdown <- p
+    print(p)
   })
+  
+  output$dotBpDown <- downloadHandler(
+    filename = "dotbpdown.svg",
+    content = function(file){
+      ggsave(file, svg$dotbpdown, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot BP down #######################
   output$gobarplotDownBP <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     bprowsdown <- bprowsdown()
-    goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
+    p <- goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
               category = "BP", nrows = bprowsdown)
+    svg$gobarbpdown <- p
+    print(p)
   })
+  
+  output$gobarBpDown <- downloadHandler(
+    filename = "gobarbpdown.svg",
+    content = function(file){
+      ggsave(file, svg$gobarbpdown, device = "svg", width = 10, units = "in") }
+  )
   # GO circle BP Down #####################
   output$goCircleDownBP <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
@@ -1688,9 +1899,16 @@ output$barKeggAll <- downloadHandler(
     bprowsdown <- bprowsdown()
     if(length(bprowsdown)>=4){
       circ <- data2circle(go=go$down[bprowsdown, ], res=data$dfilt, genes=genes$Down)
-      circle(circ, label.size = 3, nsub = length(bprowsdown), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(bprowsdown), table.legend = FALSE)
+      svg$cirbpdown <- p
+      print(p)
     }
   })
+  output$cirBpDown <- downloadHandler(
+    filename = "cirbpdown.svg",
+    content = function(file){
+      ggsave(file, svg$cirbpdown, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table MF DOWN #####################
   output$tableMFdown <- DT::renderDataTable(server=FALSE,{
@@ -1722,9 +1940,18 @@ output$barKeggAll <- downloadHandler(
     mfrowsdown <- mfrowsdown()
     if(is.null(mfrowsdown)){mfrowsdown <- c(1:10)}
     gosMF <- go$down[go$down$Ont=="MF",]
-    plotGO(enrichdf = gosMF[mfrowsdown, ], nrows = length(mfrowsdown), ont = "MF",
+    p <- plotGO(enrichdf = gosMF[mfrowsdown, ], nrows = length(mfrowsdown), ont = "MF",
            colors = c(input$downColor) )
+    svg$barmfdown <- p
+    print(p %>% plotly::ggplotly(tooltip = "all" ))
   })
+  
+  output$barMfDown <- downloadHandler(
+    filename = "barmfdown.svg",
+    content = function(file){
+      ggsave(file, svg$barmfdown, "svg", width = 10, units = "in") }
+  )
+  
   # GO MF dotplot down ################### 
   output$MFDotDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
@@ -1732,15 +1959,31 @@ output$barKeggAll <- downloadHandler(
     mfrowsdown <- mfrowsdown()
     if(is.null(mfrowsdown)){mfrowsdown <- c(1:20)}
     gosMF <- go$down[go$down$Ont=="MF",]
-    dotPlotGO(gosMF[mfrowsdown,], n = length(mfrowsdown))
+    p <- dotPlotGO(gosMF[mfrowsdown,], n = length(mfrowsdown))
+    svg$dotmfdown <- p
+    print(p)
   })
+  
+  output$dotMfDown <- downloadHandler(
+    filename = "dotmfdown.svg",
+    content = function(file){
+      ggsave(file, svg$dotmfdown, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot MF down #######################
   output$gobarplotDownMF <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     mfrowsdown <- mfrowsdown()
-    goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
+    p <- goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
               category = "MF", nrows = mfrowsdown)
+    svg$gobarmfdown <- p
+    print(p)
   })
+  
+  output$gobarMfDown <- downloadHandler(
+    filename = "gobarmfdown.svg",
+    content = function(file){
+      ggsave(file, svg$gobarmfdown, device = "svg", width = 10, units = "in") }
+  )
   # GO circle MF Down #####################
   output$goCircleDownMF <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
@@ -1749,9 +1992,16 @@ output$barKeggAll <- downloadHandler(
     mfrowsdown <- mfrowsdown()
     if(length(mfrowsdown)>=4){
       circ <- data2circle(go=go$down[mfrowsdown, ], res=data$dfilt, genes=genes$Down)
-      circle(circ, label.size = 3, nsub = length(mfrowsdown), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(mfrowsdown), table.legend = FALSE)
+      svg$cirmfdown <- p
+      print(p)
     }
   })
+  output$cirMfDown <- downloadHandler(
+    filename = "cirmfdown.svg",
+    content = function(file){
+      ggsave(file, svg$cirmfdown, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table CC DOWN #####################
   output$tableCCdown <- DT::renderDataTable(server=FALSE,{
@@ -1785,7 +2035,15 @@ output$barKeggAll <- downloadHandler(
     gosCC <- go$down[go$down$Ont=="CC",]
     plotGO(enrichdf = gosCC[ccrowsdown,], nrows = length(ccrowsdown), ont="CC",
            colors = c(input$downColor) )
+    svg$barccdown <- p
+    print(p %>% plotly::ggplotly(tooltip = "all" ))
   })
+  
+  output$barCcDown <- downloadHandler(
+    filename = "barccdown.svg",
+    content = function(file){
+      ggsave(file, svg$barccdown, "svg", width = 10, units = "in") }
+  )
   # GO CC dotplot down ################### 
   output$CCDotDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
@@ -1793,15 +2051,31 @@ output$barKeggAll <- downloadHandler(
     ccrowsdown <- ccrowsdown()
     if(is.null(ccrowsdown)){ccrowsdown <- c(1:20)}
     gosCC <- go$down[go$down$Ont=="CC",]
-    dotPlotGO(gosCC[ccrowsdown,], n = length(ccrowsdown))
+    p <- dotPlotGO(gosCC[ccrowsdown,], n = length(ccrowsdown))
+    svg$dotccdown <- p
+    print(p)
   })
+  
+  output$dotCcDown <- downloadHandler(
+    filename = "dotccdown.svg",
+    content = function(file){
+      ggsave(file, svg$dotccdown, device = "svg", width = 10, units = "in") }
+  )
   # GO gobarplot CC down #######################
   output$gobarplotDownCC <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     ccrowsdown <- ccrowsdown()
     goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
               category = "CC", nrows = ccrowsdown)
+    svg$gobarccdown <- p
+    print(p)
   })
+  
+  output$gobarCcDown <- downloadHandler(
+    filename = "gobarccdown.svg",
+    content = function(file){
+      ggsave(file, svg$gobarccdown, device = "svg", width = 10, units = "in") }
+  )
   # GO circle CC Down #####################
   output$goCircleDownCC <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
@@ -1810,9 +2084,16 @@ output$barKeggAll <- downloadHandler(
     ccrowsdown <- ccrowsdown()
     if(length(ccrowsdown)>=4){
       circ <- data2circle(go=go$down[ccrowsdown, ], res=data$dfilt, genes=genes$Down)
-      circle(circ, label.size = 3, nsub = length(ccrowsdown), table.legend = FALSE)
+      p <- circle(circ, label.size = 3, nsub = length(ccrowsdown), table.legend = FALSE)
+      svg$circcdown <- p
+      print(p)
     }
   })
+  output$cirCcDown <- downloadHandler(
+    filename = "circcdown.svg",
+    content = function(file){
+      ggsave(file, svg$circcdown, device = "svg", width = 10, units = "in") }
+  )
   # ...................... ###########
   # variables gsea ################
   gsearow <- reactive({input$gseaTable_rows_selected}) 
@@ -1864,9 +2145,17 @@ output$barKeggAll <- downloadHandler(
           content = "Sorry, I didn't get any significant results for this analysis",
           append=FALSE, style = "info")
     } else{
-        enrichplot::gseaplot2(gsea$gsea, geneSetID = gseanr, pvalue_table = TRUE, ES_geom = "line")
+        p <- enrichplot::gseaplot2(gsea$gsea, geneSetID = gseanr, pvalue_table = TRUE, ES_geom = "line")
+        svg$gseaplot <- p
+        print(p)
         }
   })
+  
+  output$gseaButton <- downloadHandler(
+    filename = "gseaplot.svg",
+    content = function(file){
+      ggsave(file, svg$gseaplot, device = "svg", width = 10, units = "in") }
+  )
   # ...................... ###########
   # #### report #############################
     output$report <- renderUI({

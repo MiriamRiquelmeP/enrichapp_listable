@@ -857,7 +857,7 @@ plotGO <- function(enrichdf, nrows = 30, orderby="p-val", ont, colors=NULL){
         scale_fill_manual(values = "red") +
         theme(panel.grid.major.y  = element_blank(),
               axis.title.y = element_blank())
-    p <- p %>% ggplotly(tooltip = "all")
+    #q <- p %>% ggplotly(tooltip = "all")
     return(p)
 }
 # Plot barras de GOAll ####################
@@ -905,7 +905,7 @@ plotGOAll <- function(enrichdf, nrows = 30, orderby="p-val",
         scale_fill_manual(values = colorfill) +
         theme(panel.grid.major.y  = element_blank(),
               axis.title.y = element_blank())
-    r <- r %>% plotly::ggplotly(tooltip = "all")
+    #r <- r %>% plotly::ggplotly(tooltip = "all")
     p <- ggplot(df, aes(fill = Regulation, y = DEG, x = goId,
                         text =paste0("p-val: ",format(p_val, scientific = T, digits = 4)) )) +
         geom_bar(position = "dodge", stat = "identity") + coord_flip() +
@@ -913,7 +913,7 @@ plotGOAll <- function(enrichdf, nrows = 30, orderby="p-val",
         scale_fill_manual(values = colorfill) +
         theme(panel.grid.major.y  = element_blank(),
               axis.title.y = element_blank())
-    p <- p %>% ggplotly(tooltip = "all")
+    #p <- p %>% ggplotly(tooltip = "all")
     q <- ggplot(df, aes(fill = Regulation, y = DEG, x = goId,
                         text =paste0("p-val: ",format(p_val, scientific = T, digits = 4)) )) +
         geom_bar(position = "stack", stat = "identity") + coord_flip() +
@@ -921,7 +921,7 @@ plotGOAll <- function(enrichdf, nrows = 30, orderby="p-val",
         scale_fill_manual(values = colorfill) +
         theme(panel.grid.major.y  = element_blank(),
               axis.title.y = element_blank())
-    q <- q %>% ggplotly(tooltip = "all")
+    #q <- q %>% ggplotly(tooltip = "all")
     return(list(p,q,r) ) 
 }
 
