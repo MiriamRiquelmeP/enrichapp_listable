@@ -307,7 +307,7 @@ server <- function(input, output, session) {
           if(length(which(grepl("^ENS", validatedGene$list[,1], ignore.case = TRUE))) < nrow(validatedGene$list) ) {
             shinyalert("Oops!!", "One or more genes are not 
             in ENSEMBL format",
-                       type = "error")
+                       type = "error" )
           } else{
                 data$df <- formatData( validatedGene$list, specie(), annotation() )
                 # lost <- which(is.na(data$df$ENTREZID))
@@ -320,7 +320,7 @@ server <- function(input, output, session) {
           if (length(which(grepl("^ENS", validatedGene$list[,1], ignore.case = TRUE))) ==  nrow(validatedGene$list)) {
             shinyalert("Oops!!", "Looks like this entry is 
                        ENSEMBL please check your selection", 
-                       type = "error")
+                       type = "error" )
           } else{
                 data$df <- formatData( validatedGene$list, specie(), annotation() )
                 # lost <- which(is.na(data$df$ENTREZID))
@@ -331,15 +331,22 @@ server <- function(input, output, session) {
       }
     }
     if( dim(data$df)[2]==5 ){
-      df3cols$TF <- TRUE
-      logfcRange$min <- min(data$df$logFC)
-      logfcRange$max <- max(data$df$logFC)
-      fcRange$min <- ifelse(logfcRange$min<0, -(2^abs(logfcRange$min)), 2^abs(logfcRange$min))
-      fcRange$max <- ifelse(logfcRange$max<0, -(2^abs(logfcRange$max)), 2^abs(logfcRange$max))
-    }
+      if( length( which(data$df$logFC > 0)) == 0 | length( which(data$df$logFC < 0)) ==0){
+        shinyalert("Warning", "It seems that the data do not have both up and down regulated genes.
+                   It will be considered as a simple gene list.", 
+                       type = "warning")
+        df3cols$TF <- FALSE
+        data$df <- data$df %>% select(-logFC, -pval)
+      }else{
+        df3cols$TF <- TRUE
+        logfcRange$min <- min(data$df$logFC)
+        logfcRange$max <- max(data$df$logFC)
+        fcRange$min <- ifelse(logfcRange$min<0, -(2^abs(logfcRange$min)), 2^abs(logfcRange$min))
+        fcRange$max <- ifelse(logfcRange$max<0, -(2^abs(logfcRange$max)), 2^abs(logfcRange$max))
+      }}
   })
   
-  ## Pulsar Enrich Button ################################################
+  ## Pulsar Enrich Button para listado simple ##################################
   observeEvent(input$enrichButtons,{
     if( dim(data$df)[2]==3 ){
       lost <- which(is.na(data$df$ENTREZID))
@@ -362,7 +369,7 @@ server <- function(input, output, session) {
       hideTab(inputId = "boxPanelCC", target = "gocirplotallcc")
     }  
     })
-  
+  ## Pulsar Enrich Button para listado 3 columnas ##################################
   observeEvent(input$enrichButton,{
     if( dim(data$df)[2]==5 ){
       lost <- which(is.na(data$df$ENTREZID))
