@@ -34,6 +34,7 @@ library(shinybusy)
 library(visNetwork)
 library(ggrepel)
 library(circlize)
+library(mychordplot)
 source("global.R")
 source("utils.R")
 options(shiny.maxRequestSize = 3000*1024^2)
@@ -822,16 +823,17 @@ output$barKeggAll <- downloadHandler(
 )
 
 # KEGG chordiag plot all ###############
-  output$keggChordAll <- renderChorddiag({
+  output$chartdiv <- renderMychordplot({
     validate(need(kgg$all, "Load file to render ChordPlot"))
     rowsAll<- rowsAll()
     if(is.null(rowsAll)){
         if( dim(kgg$all)[1]<10 ){rowsAll <-  seq_len(nrow(kgg$all)) }
         else{ rowsAll <-  seq_len(10)  }
         }
-    p <- chordPlot(kgg$all[rowsAll, ], nRows = length(rowsAll), orderby = "P.DE")
-    svg$chordAll <- list(p$x$matrix, rowsAll)
-    p
+    mychordplot(kgg$all[rowsAll, c("Pathway","genes")], )
+    #p <- chordPlot(kgg$all[rowsAll, ], nRows = length(rowsAll), orderby = "P.DE")
+    #svg$chordAll <- list(p$x$matrix, rowsAll)
+    #p
   })
  output$legendChorAll <- renderPlot({
     validate(need(kgg$all, "Load file to render ChordPlot"))
