@@ -69,7 +69,7 @@ fluidPage(
                                     ),  #barplot
                         tabPanel(title = "Chordplot",
                                  tagList(fluidRow(column(width = 8,
-                                                         chorddiagOutput("keggChordAll",
+                                                         mychordplotOutput("chartdiv",
                                                                          width = "100%",
                                                                          height = "600px") 
                                                          ),

@@ -34,7 +34,9 @@ library(shinybusy)
 library(visNetwork)
 library(ggrepel)
 library(circlize)
+library(mychordplot)
 source("global.R")
+source("UpdatepopModals.R")
 source("utils.R")
 options(shiny.maxRequestSize = 3000*1024^2)
 
@@ -399,8 +401,8 @@ server <- function(input, output, session) {
 ## ........................ #####################
 ##datatable preview 1 columna #####################
   output$table1col <- renderDataTable({
-  validate(need(data$df, ""))
-    validate(need( dim(data$df)[2]==3,"")) 
+  shiny::validate(need(data$df, ""))
+    shiny::validate(need( dim(data$df)[2]==3,"")) 
   customButtons <- list(
         list(extend = "copy", title="Preview table"),
         list(extend="collection", buttons = c("csv", "excel"),
@@ -420,7 +422,7 @@ server <- function(input, output, session) {
 ## Cosas a renderizar en preview si dflist 3 columns ##################
   ## sidebar menu preview ###################
   output$prevw <- renderMenu({
-      validate(need(isTRUE(df3cols$TF), ""))
+      shiny::validate(need(isTRUE(df3cols$TF), ""))
       sidebarMenu(
           menuItem(
               "Preview",
@@ -432,34 +434,34 @@ server <- function(input, output, session) {
   
   ## Gene List ####################
   output$geneList <- renderUI({
-    validate(need(specie(),""))
-    validate(need(annotation(),""))
+    shiny::validate(need(specie(),""))
+    shiny::validate(need(annotation(),""))
     textAreaInput(inputId = "geneList", label = "Input simple gene list ...", resize = "vertical")
   })
   
   ## Gene File #####################
   output$geneFile <- renderUI({
-    validate(need(specie(),""))
-    validate(need(annotation(),""))
+    shiny::validate(need(specie(),""))
+    shiny::validate(need(annotation(),""))
     fileInput(inputId = "geneFile", label="...or upload file with gene list")
   })
   ## Boton validar ###############
   output$geneButton <- renderUI({
-    validate(need(specie(),""))
-    validate(need(annotation(),""))
+    shiny::validate(need(specie(),""))
+    shiny::validate(need(annotation(),""))
     actionButton("geneButton", label = "Click to validate data")
   })
   ## boton enrich #########################
   output$enrichbutton <- renderUI({
-    validate(need(data$df, ""))
-    validate(need(!isTRUE(df3cols$TF), ""))
+    shiny::validate(need(data$df, ""))
+    shiny::validate(need(!isTRUE(df3cols$TF), ""))
     actionBttn("enrichButtons", label = "Click to run enrichment", size="lg", color="default", icon = icon("images"))
   })
   
 
 ## sidebar menu kegg ###################
   output$menuKegg <- renderMenu({
-      validate(need(kgg$all, ""))
+      shiny::validate(need(kgg$all, ""))
       sidebarMenu(
           menuItem(
               "Kegg Enrichment",
@@ -497,7 +499,7 @@ server <- function(input, output, session) {
       
   ## side menubar GO #########################
       output$menuGO <- renderMenu({
-      validate(need(go$all,""))
+      shiny::validate(need(go$all,""))
       sidebarMenu(  
         menuItem(
               "GO Enrichment",
@@ -508,7 +510,7 @@ server <- function(input, output, session) {
       })
   ## sidebar menu GSEA #####################333
   output$menuGSEA <- renderMenu({
-      validate(need(gsea$gsea,""))
+      shiny::validate(need(gsea$gsea,""))
       sidebarMenu(  
           menuItem("GSEA",
                    tabName = "gsea",
@@ -517,7 +519,7 @@ server <- function(input, output, session) {
       })
     # ui selector de genes para volcano plot #######################
   output$geneSelector <- renderUI({
-    validate(need(data$df, ""))
+    shiny::validate(need(data$df, ""))
     genes <- as.character(data$df$SYMBOL[ which(!( data$df$pval>padj() &
                                                              data$df$logFC>logfc()[1] &
                                                              data$df$logFC<logfc()[2] )) ])
@@ -529,15 +531,15 @@ server <- function(input, output, session) {
   # Deslizador fc/logfc según switch #################
   output$fc_control <- renderUI({
     if(isTRUE(fc_switch())){
-      validate(need(data$df, ""))
+      shiny::validate(need(data$df, ""))
       valmin <- ifelse(input$logfc[1]<0, -2^(abs(input$logfc[1] )), 2^(abs(input$logfc[1])) )
       valmax <- ifelse(input$logfc[2]<0, -2^(abs(input$logfc[2] )), 2^(abs(input$logfc[2])) )
       sliderInput("fc", label = "Select FC range to remove (keeps the tails)",
                   min=round(fcRange$min,3), max=round(fcRange$max, 3),
                   value = c(valmin, valmax), step = 0.1 )
     } else {
-      validate(need(data$df, ""))
-      validate(need(fc(), ""))
+      shiny::validate(need(data$df, ""))
+      shiny::validate(need(fc(), ""))
         if(is.null(input$fc[1]) ){
           valmin = -0.5
           valmax = 0.5
@@ -553,41 +555,41 @@ server <- function(input, output, session) {
   })
     # ui selector padj #################################
   output$padj <- renderUI({
-    validate(need(data$df,""))
+    shiny::validate(need(data$df,""))
     sliderInput("padj", label = "Select p-adjusted threshold", min = 0, max=0.2,
                 value=0.05, step = 0.005 )
   })
   
     # infoboxes ###############################
   output$allbox <- renderInfoBox({
-      validate(need(data$df, ""))
-      validate(need(padj(), ""))
-      validate(need(logfc(), ""))
+      shiny::validate(need(data$df, ""))
+      shiny::validate(need(padj(), ""))
+      shiny::validate(need(logfc(), ""))
       numall <- nrow( data$df[ ((data$df$logFC >= logfc()[2] |
                                     data$df$logFC< logfc()[1]) &
                                    data$df$pval <= padj() ),] ) 
       infoBox("All DE genes", numall, icon = icon("arrows-alt-v"), color = "light-blue", fill = TRUE)
   })
   output$upbox <- renderInfoBox({
-      validate(need(data$df, ""))
-      validate(need(padj(), ""))
-      validate(need(logfc(), ""))
+      shiny::validate(need(data$df, ""))
+      shiny::validate(need(padj(), ""))
+      shiny::validate(need(logfc(), ""))
       numup <- nrow( data$df[(data$df$logFC >= logfc()[2]) & (data$df$pval <= padj()), ]) 
       numgenesDE$up <- numup
       infoBox("Upregulated genes", numup, icon = icon("thumbs-up", lib = "glyphicon"), color = "light-blue", fill=TRUE)
   })
   output$downbox <- renderInfoBox({
-      validate(need(data$df, ""))
-      validate(need(padj(), ""))
-      validate(need(logfc(), ""))
+      shiny::validate(need(data$df, ""))
+      shiny::validate(need(padj(), ""))
+      shiny::validate(need(logfc(), ""))
       numdown <- nrow( data$df[(data$df$logFC <= logfc()[1]) & (data$df$pval <= padj()), ])
       numgenesDE$down <- numdown
       infoBox("Downregulated genes", numdown, icon = icon("thumbs-down", lib = "glyphicon"), color = "light-blue", fill=TRUE)
   })
   
   output$fcdown <- renderUI({
-        validate(need(logfcRange$min, ""))
-        validate(need(logfc(),""))
+        shiny::validate(need(logfcRange$min, ""))
+        shiny::validate(need(logfc(),""))
         initMin <- round( logfcRange$min, 2)
         initMax <- round( logfcRange$max, 2)
         if(logfc()[1]>=0){
@@ -625,8 +627,8 @@ server <- function(input, output, session) {
       )
   })
   output$fcup <- renderUI({
-        validate(need(logfcRange$min, ""))
-        validate(need(logfc(),""))
+        shiny::validate(need(logfcRange$min, ""))
+        shiny::validate(need(logfc(),""))
         initMin <- round( logfcRange$min, 2)
         initMax <- round( logfcRange$max, 2)
         if(logfc()[2]>=0){
@@ -664,7 +666,7 @@ server <- function(input, output, session) {
       )
   })
   output$pval <- renderUI({
-      validate(need(padj(), ""))
+      shiny::validate(need(padj(), ""))
       fgColor = "#74c476"
       inputColor = "white"
       bgColor = "#46505a"
@@ -688,7 +690,7 @@ server <- function(input, output, session) {
 #....................... ####
 ## table preview ######################################
 output$tablepreview <- DT::renderDT(server=FALSE,{
-  validate(need(data$df, ""))
+  shiny::validate(need(data$df, ""))
   customButtons <- list(
         list(extend = "copy", title="Preview table"),
         list(extend="collection", buttons = c("csv", "excel"),
@@ -710,17 +712,15 @@ output$tablepreview <- DT::renderDT(server=FALSE,{
 })
 
 output$lostgene <- renderText({
-  validate(need(data$df, ""))
+  shiny::validate(need(data$df, ""))
   lost <- length(which(is.na(data$df$ENTREZID)))
   print(paste0(lost," out of ", dim(data$df)[1]," genes have no ENTREZ Id. Theses genes will be missing in enrichment analysis" ) )
 })
 # ....................... ####
   # volcano plot #########
   output$volcano <- renderPlot( {
-    #validate(need(datos$dds, "Load file and condition to render Volcano"))
-    validate(need(data$df, "Load file to render plot"))
+    shiny::validate(need(data$df, "Load file to render plot"))
     res <-  data$df
-    #res$`-log10padj` <- (-log10(res$padj)) 
     svg$volcano <- CustomVolcano(res, lab = as.character(res$SYMBOL),
                   selectLab = genesVolcano(),
                     x = 'logFC',
@@ -752,7 +752,7 @@ output$texto1 <- renderTable( digitgeoms = -2, {
 #....................... ####
 ## karyoplot ######################################
 output$karyoPlot <- renderPlot({
-    validate(need(data$df, "Load file to render plot"))
+    shiny::validate(need(data$df, "Load file to render plot"))
     krtp(data$df, specie = specie(), pval = padj(), fcdown = logfc()[1],
          fcup = logfc()[2], bg="#46505a", coldown="#4ADBFF" , colup="#f7665c", annotation=annotation() )
 })
@@ -772,7 +772,7 @@ output$downKrpt <- downloadHandler(
   rowsAll <- reactive({input$tableAll_rows_selected})
  # KEGG table all #####################################
   output$tableAll <- DT::renderDT(server=FALSE,{
-    validate(need(kgg$all, "Load file to render table"))
+    shiny::validate(need(kgg$all, "Load file to render table"))
     names(kggDT$all)[names(kggDT$all) == "DE"] <- "DEG"
     names(kggDT$all)[names(kggDT$all) == "P.DE"] <- "p-value"
     tituloTabla <- paste0("Table: Kegg DEG genes")
@@ -792,7 +792,7 @@ output$downKrpt <- downloadHandler(
   }) 
   # KEGG barplot all################
   output$keggPlotAll <- renderPlotly ({
-    validate(need(kgg$all, "Load file to render BarPlot"))
+    shiny::validate(need(kgg$all, "Load file to render BarPlot"))
     rowsAll <- rowsAll()
     if(is.null(rowsAll)){
         if( dim(kgg$all)[1]<10 ){rowsAll <-  seq_len(nrow(kgg$all)) }
@@ -822,19 +822,20 @@ output$barKeggAll <- downloadHandler(
 )
 
 # KEGG chordiag plot all ###############
-  output$keggChordAll <- renderChorddiag({
-    validate(need(kgg$all, "Load file to render ChordPlot"))
+  output$chartdiv <- renderMychordplot({
+    shiny::validate(need(kgg$all, "Load file to render ChordPlot"))
     rowsAll<- rowsAll()
     if(is.null(rowsAll)){
         if( dim(kgg$all)[1]<10 ){rowsAll <-  seq_len(nrow(kgg$all)) }
         else{ rowsAll <-  seq_len(10)  }
-        }
-    p <- chordPlot(kgg$all[rowsAll, ], nRows = length(rowsAll), orderby = "P.DE")
-    svg$chordAll <- list(p$x$matrix, rowsAll)
-    p
+    }
+    mychordplot(kgg$all[rowsAll, c("Pathway","genes") ], div="chartdiv" )
+    # p <- chordPlot(kgg$all[rowsAll, ], nRows = length(rowsAll), orderby = "P.DE")
+    # svg$chordAll <- list(p$x$matrix, rowsAll)
+    # p
   })
  output$legendChorAll <- renderPlot({
-    validate(need(kgg$all, "Load file to render ChordPlot"))
+    shiny::validate(need(kgg$all, "Load file to render ChordPlot"))
     rowsAll <- rowsAll()
     if(is.null(rowsAll)){
         if (dim(kgg$all)[1] < 10) {rowsAll <-  seq_len(nrow(kgg$all))}
@@ -844,26 +845,26 @@ output$barKeggAll <- downloadHandler(
     legendChorplot(kgg$all[rowsAll, ] )
   })
  # download chorplot All
- output$chordKeggAll <- downloadHandler(
-  filename = "chordKeggAll.svg",
-  content = function(file){
-    svg(file)
-    chordDiagram(svg$chordAll[[1]], transparency = 0.3, big.gap = 1,
-                 annotationTrack = c("grid"),
-                 grid.col = colorRampPalette( 
-                   RColorBrewer::brewer.pal(11, "Spectral"))(length(svg$chordAll[[2]])) )
-    circos.track(track.index = 1, panel.fun = function(x, y) {
-    circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
-        facing = "clockwise", niceFacing = TRUE, adj = c(0, 3))},
-    bg.border = NA)
-    dev.off()
-     }
-)
+#  output$chordKeggAll <- downloadHandler(
+#   filename = "chordKeggAll.svg",
+#   content = function(file){
+#     svg(file)
+#     chordDiagram(svg$chordAll[[1]], transparency = 0.3, big.gap = 1,
+#                  annotationTrack = c("grid"),
+#                  grid.col = colorRampPalette( 
+#                    RColorBrewer::brewer.pal(11, "Spectral"))(length(svg$chordAll[[2]])) )
+#     circos.track(track.index = 1, panel.fun = function(x, y) {
+#     circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, 
+#         facing = "clockwise", niceFacing = TRUE, adj = c(0, 3))},
+#     bg.border = NA)
+#     dev.off()
+#      }
+# )
  
   # KEGG dotplot All ################### 
   output$keggDotAll <- renderPlot({
-    validate(need(kgg$all, "Load file and select to render dotPlot"))
-    validate(need(rowsAll(), "Select the paths of interest to render DotPlot"))
+    shiny::validate(need(kgg$all, "Load file and select to render dotPlot"))
+    shiny::validate(need(rowsAll(), "Select the paths of interest to render DotPlot"))
     rowsAll <- rowsAll()
     if(is.null(rowsAll)){rowsAll <- c(1:20)}
     p <- dotPlotkegg(kgg$all[rowsAll,], n = length(rowsAll))
@@ -879,9 +880,9 @@ output$barKeggAll <- downloadHandler(
 
   # KEGG heatmap All #################
   output$heatmapKeggAll <- renderPlotly({
-    validate(need(kgg$all, "Load file and select to render Heatmap"))
-    validate(need(rowsAll(), "Select the paths of interest to render HeatMap"))
-    validate(need(kggDT$all, ""))
+    shiny::validate(need(kgg$all, "Load file and select to render Heatmap"))
+    shiny::validate(need(rowsAll(), "Select the paths of interest to render HeatMap"))
+    shiny::validate(need(kggDT$all, ""))
     p <- heatmapKegg(kggDT$all, rowsAll())
     svg$heatKeggAll <- list(kggDT$all, rowsAll())
     print(p)
@@ -896,9 +897,9 @@ output$barKeggAll <- downloadHandler(
   
 # KEGG cnet All #################
   output$legendAll <- renderPlot({
-    validate(need(kgg$all, "Load file and select to render Net Plot"))
-    validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
-    validate(need(kggDT$all, ""))
+    shiny::validate(need(kgg$all, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kggDT$all, ""))
     visnetLegend(kggDT = kggDT$all , rows = rowsAll() )
   })
    output$keggAllNet <- renderUI({
@@ -909,16 +910,16 @@ output$barKeggAll <- downloadHandler(
     }
   })
   output$cnetAllKegg <- renderPlot({
-    validate(need(kgg$all, "Load file and select to render Net Plot"))
-    validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kgg$all, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
     p <- customCnetKegg(kgg$all, rowsAll(), genesUp = data$dfilt, genesDown = NULL)
     svg$cnetKeggAll <- p
     print(p)
   })
   output$visnetKeggAll <- renderVisNetwork({
-    validate(need(kgg$all, "Load file and select to render Net Plot"))
-    validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
-    validate(need(kggDT$all, ""))
+    shiny::validate(need(kgg$all, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsAll(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kggDT$all, ""))
     visData <- customVisNet(kgg$all, nTerm=rowsAll(), kggDT$all,
                              up = genes$Up$SYMBOL, down = genes$Down$SYMBOL )
     visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
@@ -937,7 +938,7 @@ output$barKeggAll <- downloadHandler(
   rowsUp <- reactive({input$table_rows_selected})
  # KEGG table up #####################################
   output$table <- DT::renderDT(server=FALSE,{
-    validate(need(kgg$up, "Load file to render table"))
+    shiny::validate(need(kgg$up, "Load file to render table"))
     names(kggDT$up)[names(kggDT$up) == "DE"] <- "DEG"
     names(kggDT$up)[names(kggDT$up) == "P.DE"] <- "p-value"
     tituloTabla <- paste0("Table: Kegg DEG genes")
@@ -957,7 +958,7 @@ output$barKeggAll <- downloadHandler(
   }) 
   # KEGG barplot up################
   output$keggPlot <- renderPlotly ({
-    validate(need(kgg$up, "Load file to render BarPlot"))
+    shiny::validate(need(kgg$up, "Load file to render BarPlot"))
     rowsUp <- rowsUp()
     if(is.null(rowsUp)){
         if( dim(kgg$up)[1]<10 ){rowsUp <-  seq_len(nrow(kgg$up)) }
@@ -976,7 +977,7 @@ output$barKeggAll <- downloadHandler(
   
   # KEGG chordiag plot up ###############
   output$keggChord <- renderChorddiag({
-    validate(need(kgg$up, "Load file to render ChordPlot"))
+    shiny::validate(need(kgg$up, "Load file to render ChordPlot"))
     rowsUp<- rowsUp()
     if(is.null(rowsUp)){
         if( dim(kgg$up)[1]<10 ){rowsUp <-  seq_len(nrow(kgg$up)) }
@@ -987,7 +988,7 @@ output$barKeggAll <- downloadHandler(
     p
   })
  output$legendChorUp <- renderPlot({
-    validate(need(kgg$up, "Load file to render ChordPlot"))
+    shiny::validate(need(kgg$up, "Load file to render ChordPlot"))
     rowsUp <- rowsUp()
     if(is.null(rowsUp)){
         if (dim(kgg$up)[1] < 10) {rowsUp <-  seq_len(nrow(kgg$up))}
@@ -1014,8 +1015,8 @@ output$barKeggAll <- downloadHandler(
 )
   # KEGG dotplot UP ################### 
   output$keggDotUp <- renderPlot({
-    validate(need(kgg$up, "Load file and select to render dotPlot"))
-    validate(need(rowsUp(), "Select the paths of interest to render DotPlot"))
+    shiny::validate(need(kgg$up, "Load file and select to render dotPlot"))
+    shiny::validate(need(rowsUp(), "Select the paths of interest to render DotPlot"))
     rowsUp <- rowsUp()
     if(is.null(rowsUp)){rowsUp <- c(1:20)}
     p <- dotPlotkegg(kgg$up[rowsUp,], n = length(rowsUp))
@@ -1030,9 +1031,9 @@ output$barKeggAll <- downloadHandler(
 
   # KEGG heatmap Up #################
   output$heatmapKeggUp <- renderPlotly({
-    validate(need(kgg$up, "Load file and select to render Heatmap"))
-    validate(need(rowsUp(), "Select the paths of interest to render HeatMap"))
-    validate(need(kggDT$up, ""))
+    shiny::validate(need(kgg$up, "Load file and select to render Heatmap"))
+    shiny::validate(need(rowsUp(), "Select the paths of interest to render HeatMap"))
+    shiny::validate(need(kggDT$up, ""))
     p <- heatmapKegg(kggDT$up, rowsUp())
     svg$heatKeggUp <- list(kggDT$up, rowsUp())
     print(p)
@@ -1046,9 +1047,9 @@ output$barKeggAll <- downloadHandler(
   )
 # KEGG cnet Up #################
   output$legendUp <- renderPlot({
-    validate(need(kgg$up, "Load file and select to render Net Plot"))
-    validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
-    validate(need(kggDT$up, ""))
+    shiny::validate(need(kgg$up, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kggDT$up, ""))
     visnetLegend(kggDT = kggDT$up , rows = rowsUp() )
   })
    output$keggUpNet <- renderUI({
@@ -1059,16 +1060,16 @@ output$barKeggAll <- downloadHandler(
     }
   })
   output$cnetKeggUp <- renderPlot({
-    validate(need(kgg$up, "Load file and select to render Net Plot"))
-    validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kgg$up, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
     p <- customCnetKegg(kgg$up, rowsUp(), genesUp = data$dfilt, genesDown = NULL)
     svg$cnetKeggUp <- p
     print(p)
   })
   output$visnetKeggUp <- renderVisNetwork({
-    validate(need(kgg$up, "Load file and select to render Net Plot"))
-    validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
-    validate(need(kggDT$up, ""))
+    shiny::validate(need(kgg$up, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsUp(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kggDT$up, ""))
     visData <- customVisNet(kgg$up, nTerm=rowsUp(), kggDT$up,
                              up = genes$Up$SYMBOL, down = NULL )
     visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
@@ -1086,7 +1087,7 @@ output$barKeggAll <- downloadHandler(
   rowsDown <- reactive({input$tableDown_rows_selected})
  # KEGG table down #####################################
   output$tableDown <- DT::renderDT(server=FALSE,{
-    validate(need(kgg$down, "Load file to render table"))
+    shiny::validate(need(kgg$down, "Load file to render table"))
     names(kggDT$down)[names(kggDT$down) == "DE"] <- "DEG"
     names(kggDT$down)[names(kggDT$down) == "P.DE"] <- "p-value"
     tituloTabla <- paste0("Table: Kegg DEG genes")
@@ -1106,7 +1107,7 @@ output$barKeggAll <- downloadHandler(
   }) 
   # KEGG barplot down################
   output$keggPlotDown <- renderPlotly ({
-    validate(need(kgg$down, "Load file to render BarPlot"))
+    shiny::validate(need(kgg$down, "Load file to render BarPlot"))
     rowsDown <- rowsDown()
     if(is.null(rowsDown)){
         if( dim(kgg$down)[1]<10 ){rowsDown <-  seq_len(nrow(kgg$down)) }
@@ -1125,7 +1126,7 @@ output$barKeggAll <- downloadHandler(
   
   # KEGG chordiag plot down ###############
   output$keggChordDown <- renderChorddiag({
-    validate(need(kgg$down, "Load file to render ChordPlot"))
+    shiny::validate(need(kgg$down, "Load file to render ChordPlot"))
     rowsDown<- rowsDown()
     if(is.null(rowsDown)){
         if( dim(kgg$down)[1]<10 ){rowsDown <-  seq_len(nrow(kgg$down)) }
@@ -1136,7 +1137,7 @@ output$barKeggAll <- downloadHandler(
     p
   })
  output$legendChorDown <- renderPlot({
-    validate(need(kgg$down, "Load file to render ChordPlot"))
+    shiny::validate(need(kgg$down, "Load file to render ChordPlot"))
     rowsDown <- rowsDown()
     if(is.null(rowsDown)){
         if (dim(kgg$down)[1] < 10) {rowsDown <-  seq_len(nrow(kgg$down))}
@@ -1163,8 +1164,8 @@ output$barKeggAll <- downloadHandler(
 )
   # KEGG dotplot Down ################### 
   output$keggDotDown <- renderPlot({
-    validate(need(kgg$down, "Load file and select to render dotPlot"))
-    validate(need(rowsDown(), "Select the paths of interest to render DotPlot"))
+    shiny::validate(need(kgg$down, "Load file and select to render dotPlot"))
+    shiny::validate(need(rowsDown(), "Select the paths of interest to render DotPlot"))
     rowsDown <- rowsDown()
     if(is.null(rowsDown)){rowsDown <- c(1:20)}
     p <- dotPlotkegg(kgg$down[rowsDown,], n = length(rowsDown))
@@ -1178,9 +1179,9 @@ output$barKeggAll <- downloadHandler(
   )
   # KEGG heatmap Down #################
   output$heatmapKeggDown <- renderPlotly({
-    validate(need(kgg$down, "Load file and select to render Heatmap"))
-    validate(need(rowsDown(), "Select the paths of interest to render HeatMap"))
-    validate(need(kggDT$down, ""))
+    shiny::validate(need(kgg$down, "Load file and select to render Heatmap"))
+    shiny::validate(need(rowsDown(), "Select the paths of interest to render HeatMap"))
+    shiny::validate(need(kggDT$down, ""))
     p <- heatmapKegg(kggDT$down, rowsDown())
     svg$heatKeggDown <- list(kggDT$down, rowsDown())
     print(p)
@@ -1195,9 +1196,9 @@ output$barKeggAll <- downloadHandler(
  
 # KEGG cnet Down #################
   output$legendDown <- renderPlot({
-    validate(need(kgg$down, "Load file and select to render Net Plot"))
-    validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
-    validate(need(kggDT$down, ""))
+    shiny::validate(need(kgg$down, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kggDT$down, ""))
     visnetLegend(kggDT = kggDT$down , rows = rowsDown() )
   })
    output$keggDownNet <- renderUI({
@@ -1208,16 +1209,16 @@ output$barKeggAll <- downloadHandler(
     }
   })
   output$cnetKeggDown <- renderPlot({
-    validate(need(kgg$down, "Load file and select to render Net Plot"))
-    validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kgg$down, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
     p <- customCnetKegg(kgg$down, rowsDown(), genesDown = data$dfilt, genesUp = NULL)
     svg$cnetKeggDown <- p
     print(p)
     })
   output$visnetKeggDown <- renderVisNetwork({
-    validate(need(kgg$down, "Load file and select to render Net Plot"))
-    validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
-    validate(need(kggDT$down, ""))
+    shiny::validate(need(kgg$down, "Load file and select to render Net Plot"))
+    shiny::validate(need(rowsDown(), "Select the paths of interest to render NetPlot"))
+    shiny::validate(need(kggDT$down, ""))
     visData <- customVisNet(kgg$down, nTerm=rowsDown(), kggDT$down,
                              down = genes$Down$SYMBOL, up = NULL )
     visNetwork(visData$nodes, visData$edges, background = "#ffffff") %>%
@@ -1250,7 +1251,7 @@ output$barKeggAll <- downloadHandler(
  # ....................... ####
    # GO table BP ALL #####################
   output$tableBPall <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$all, "Load file to render table"))
+    shiny::validate(need(goDT$all, "Load file to render table"))
     goDT <- goDT$all 
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1272,7 +1273,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots BP all #####################
   output$plotBPall <- renderPlotly({
-    validate(need(go$all, "Load file to render plot"))
+    shiny::validate(need(go$all, "Load file to render plot"))
     bprowsall <- bprowsall()
     if(is.null(bprowsall)){bprowsall <- c(1:10)}
     gosBP <- go$all[go$all$Ont=="BP",]
@@ -1298,8 +1299,8 @@ output$barKeggAll <- downloadHandler(
   )
   # GO BP dotplot all ################### 
   output$BPDotall <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
-    validate(need(bprowsall(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(bprowsall(), "Select the terms of interest to render DotPlot"))
     bprowsall <- bprowsall()
     if(is.null(bprowsall)){bprowsall <- c(1:20)}
     gosBP <- go$all[go$all$Ont=="BP",]
@@ -1315,7 +1316,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot BP all #######################
   output$gobarplotAllBP <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
     bprowsall <- bprowsall()
     p <- goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
               category = "BP", nrows = bprowsall)
@@ -1330,9 +1331,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle BP all #####################
   output$goCircleAllBP <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( bprowsall() , "Select at least 4 rows"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( bprowsall() , "Select at least 4 rows"))
     bprowsall <- bprowsall()
     if(length(bprowsall)>=4){
       circ <- data2circle(go=go$all[bprowsall, ], res=data$dfilt, genes=genes$all)
@@ -1349,7 +1350,7 @@ output$barKeggAll <- downloadHandler(
   # ...................... #############
   # GO table MF all #####################
   output$tableMFall <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$all, "Load file to render table"))
+    shiny::validate(need(goDT$all, "Load file to render table"))
     goDT <- goDT$all
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1373,7 +1374,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots MF all  #####################
   output$plotMFall <- renderPlotly({
-    validate(need(go$all, "Load file to render plot"))
+    shiny::validate(need(go$all, "Load file to render plot"))
     mfrowsall <- mfrowsall()
     if(is.null(mfrowsall)){mfrowsall <- c(1:10)}
     gosMF <- go$all[go$all$Ont=="MF",]
@@ -1400,8 +1401,8 @@ output$barKeggAll <- downloadHandler(
   )
   # GO MF dotplot all ################### 
   output$MFDotall <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
-    validate(need(mfrowsall(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(mfrowsall(), "Select the terms of interest to render DotPlot"))
     mfrowsall <- mfrowsall()
     if(is.null(mfrowsall)){mfrowsall <- c(1:20)}
     gosMF <- go$all[go$all$Ont=="MF",]
@@ -1417,7 +1418,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot MF all ####################
   output$gobarplotAllMF <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
     mfrowsall <- mfrowsall()
     p <- goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
               category = "MF", nrows = mfrowsall)
@@ -1432,9 +1433,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle MF all #####################
   output$goCircleAllMF <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( mfrowsall() , "Select at least 4 rows"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( mfrowsall() , "Select at least 4 rows"))
     mfrowsall <- mfrowsall()
     if(length(mfrowsall)>=4){
       circ <- data2circle(go=go$all[mfrowsall, ], res=data$dfilt, genes=genes$all)
@@ -1451,7 +1452,7 @@ output$barKeggAll <- downloadHandler(
   # ............ ###############################
   # GO table CC all #####################
   output$tableCCall <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$all, "Load file to render table"))
+    shiny::validate(need(goDT$all, "Load file to render table"))
     goDT <- goDT$all
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1475,7 +1476,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots CC all #####################
   output$plotCCall <- renderPlotly({
-    validate(need(go$all, "Load file to render plot"))
+    shiny::validate(need(go$all, "Load file to render plot"))
     ccrowsall <- ccrowsall()
     if(is.null(ccrowsall)){ccrowsall <- c(1:10)}
     gosCC <- go$all[go$all$Ont=="CC",]
@@ -1502,8 +1503,8 @@ output$barKeggAll <- downloadHandler(
   )
   # GO CC dotplot all ################### 
   output$CCDotall <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
-    validate(need(ccrowsall(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(ccrowsall(), "Select the terms of interest to render DotPlot"))
     ccrowsall <- ccrowsall()
     if(is.null(ccrowsall)){ccrowsall <- c(1:20)}
     gosCC <- go$all[go$all$Ont=="CC",]
@@ -1519,7 +1520,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot CC all #######################
   output$gobarplotAllCC <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
     ccrowsall <- ccrowsall()
     p <- goBarplot(enrichGO = go$all, resGO = data$dfilt, genes= genes$all,
               category = "CC", nrows = ccrowsall)
@@ -1534,9 +1535,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle CC all #####################
   output$goCircleAllCC <- renderPlot({
-    validate(need(go$all, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( ccrowsall() , "Select at least 4 rows"))
+    shiny::validate(need(go$all, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( ccrowsall() , "Select at least 4 rows"))
     ccrowsall <- ccrowsall()
     if(length(ccrowsall)>=4){
       circ <- data2circle(go=go$all[ccrowsall, ], res=data$dfilt, genes=genes$all)
@@ -1553,7 +1554,7 @@ output$barKeggAll <- downloadHandler(
   # ............ ###############################
   # GO table BP UP#####################
   output$tableBP <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$up, "Load file to render table"))
+    shiny::validate(need(goDT$up, "Load file to render table"))
     goDT <- goDT$up
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1575,7 +1576,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots BP UP #####################
   output$plotBP <- renderPlotly({
-    validate(need(go$up, "Load file to render plot"))
+    shiny::validate(need(go$up, "Load file to render plot"))
     bprowsup <- bprowsup()
     if(is.null(bprowsup)){bprowsup <- c(1:10)}
     gosBP <- go$up[go$up$Ont=="BP",]
@@ -1592,8 +1593,8 @@ output$barKeggAll <- downloadHandler(
   )
   # GO BP dotplot up ################### 
   output$BPDotUp <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
-    validate(need(bprowsup(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(bprowsup(), "Select the terms of interest to render DotPlot"))
     bprowsup <- bprowsup()
     if(is.null(bprowsup)){bprowsup <- c(1:20)}
     gosBP <- go$up[go$up$Ont=="BP",]
@@ -1609,7 +1610,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot BP Up #######################
   output$gobarplotUpBP <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
     bprowsup <- bprowsup()
     p <- goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
               category = "BP", nrows = bprowsup)
@@ -1624,9 +1625,9 @@ output$barKeggAll <- downloadHandler(
   )
     # GO circle BP Up #####################
   output$goCircleUpBP <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( bprowsup() , "Select at least 4 rows"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( bprowsup() , "Select at least 4 rows"))
     bprowsup <- bprowsup()
     if(length(bprowsup)>=4){
       circ <- data2circle(go=go$up[bprowsup, ], res=data$dfilt, genes=genes$Up)
@@ -1643,7 +1644,7 @@ output$barKeggAll <- downloadHandler(
   # ............ ###############################
   # GO table MF UP #####################
   output$tableMF <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$up, "Load file to render table"))
+    shiny::validate(need(goDT$up, "Load file to render table"))
     goDT <- goDT$up
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1667,7 +1668,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots MF UP #####################
   output$plotMF <- renderPlotly({
-    validate(need(go$up, "Load file to render plot"))
+    shiny::validate(need(go$up, "Load file to render plot"))
     mfrowsup <- mfrowsup()
     if(is.null(mfrowsup)){mfrowsup <- c(1:10)}
     gosMF <- go$up[go$up$Ont=="MF",]
@@ -1684,8 +1685,8 @@ output$barKeggAll <- downloadHandler(
   )
   # GO MF dotplot up ################### 
   output$MFDotUp <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
-    validate(need(mfrowsup(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(mfrowsup(), "Select the terms of interest to render DotPlot"))
     mfrowsup <- mfrowsup()
     if(is.null(mfrowsup)){mfrowsup <- c(1:20)}
     gosMF <- go$up[go$up$Ont=="MF",]
@@ -1701,7 +1702,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot MF Up #######################
   output$gobarplotUpMF <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
     mfrowsup <- mfrowsup()
     p <- goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
               category = "MF", nrows = mfrowsup)
@@ -1716,9 +1717,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle MF Up #####################
   output$goCircleUpMF <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( mfrowsup() , "Select at least 4 rows"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( mfrowsup() , "Select at least 4 rows"))
     mfrowsup <- mfrowsup()
     if(length(mfrowsup)>=4){
       circ <- data2circle(go=go$up[mfrowsup, ], res=data$dfilt, genes=genes$Up)
@@ -1735,7 +1736,7 @@ output$barKeggAll <- downloadHandler(
   # ............ ###############################
   # GO table CC UP #####################
   output$tableCC <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$up, "Load file to render table"))
+    shiny::validate(need(goDT$up, "Load file to render table"))
     goDT <- goDT$up
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1759,7 +1760,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots CC UP #####################
   output$plotCC <- renderPlotly({
-    validate(need(go$up, "Load file to render plot"))
+    shiny::validate(need(go$up, "Load file to render plot"))
     ccrowsup <- ccrowsup()
     if(is.null(ccrowsup)){ccrowsup <- c(1:10)}
     gosCC <- go$up[go$up$Ont=="CC",]
@@ -1776,8 +1777,8 @@ output$barKeggAll <- downloadHandler(
   )
   # GO CC dotplot up ################### 
   output$CCDotUp <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
-    validate(need(ccrowsup(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(ccrowsup(), "Select the terms of interest to render DotPlot"))
     ccrowsup <- ccrowsup()
     if(is.null(ccrowsup)){ccrowsup <- c(1:20)}
     gosCC <- go$up[go$up$Ont=="CC",]
@@ -1793,7 +1794,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot CC Up #######################
   output$gobarplotUpCC <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
     ccrowsup <- ccrowsup()
     goBarplot(enrichGO = go$up, resGO = data$dfilt, genes= genes$Up,
               category = "CC", nrows = ccrowsup)
@@ -1808,9 +1809,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle CC Up #####################
   output$goCircleUpCC <- renderPlot({
-    validate(need(go$up, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( ccrowsup() , "Select at least 4 rows"))
+    shiny::validate(need(go$up, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( ccrowsup() , "Select at least 4 rows"))
     ccrowsup <- ccrowsup()
     if(length(ccrowsup)>=4){
       circ <- data2circle(go=go$up[ccrowsup, ], res=data$dfilt, genes=genes$Up)
@@ -1827,7 +1828,7 @@ output$barKeggAll <- downloadHandler(
   # ............ ###############################
   # GO table BP DOWN #####################
   output$tableBPdown <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$down, "Load file to render table"))
+    shiny::validate(need(goDT$down, "Load file to render table"))
     goDT <- goDT$down
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1850,7 +1851,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots BP DOWN #####################
   output$plotBPdown <- renderPlotly({
-    validate(need(go$down, "Load file to render plot"))
+    shiny::validate(need(go$down, "Load file to render plot"))
     bprowsdown <- bprowsdown()
     if(is.null(bprowsdown)){bprowsdown <- c(1:10)}
     gosBP <- go$down[go$down$Ont=="BP",]
@@ -1868,8 +1869,8 @@ output$barKeggAll <- downloadHandler(
   
   # GO BP dotplot down ################### 
   output$BPDotDown <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
-    validate(need(bprowsdown(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(bprowsdown(), "Select the terms of interest to render DotPlot"))
     bprowsdown <- bprowsdown()
     if(is.null(bprowsdown)){bprowsdown <- c(1:20)}
     gosBP <- go$down[go$down$Ont=="BP",]
@@ -1885,7 +1886,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot BP down #######################
   output$gobarplotDownBP <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
     bprowsdown <- bprowsdown()
     p <- goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
               category = "BP", nrows = bprowsdown)
@@ -1900,9 +1901,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle BP Down #####################
   output$goCircleDownBP <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( bprowsdown() , "Select at least 4 rows"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( bprowsdown() , "Select at least 4 rows"))
     bprowsdown <- bprowsdown()
     if(length(bprowsdown)>=4){
       circ <- data2circle(go=go$down[bprowsdown, ], res=data$dfilt, genes=genes$Down)
@@ -1919,7 +1920,7 @@ output$barKeggAll <- downloadHandler(
   # ............ ###############################
   # GO table MF DOWN #####################
   output$tableMFdown <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$down, "Load file to render table"))
+    shiny::validate(need(goDT$down, "Load file to render table"))
     goDT <- goDT$down
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -1943,7 +1944,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots MF DOWN #####################
   output$plotMFdown <- renderPlotly({
-    validate(need(go$down, "Load file to render plot"))
+    shiny::validate(need(go$down, "Load file to render plot"))
     mfrowsdown <- mfrowsdown()
     if(is.null(mfrowsdown)){mfrowsdown <- c(1:10)}
     gosMF <- go$down[go$down$Ont=="MF",]
@@ -1961,8 +1962,8 @@ output$barKeggAll <- downloadHandler(
   
   # GO MF dotplot down ################### 
   output$MFDotDown <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
-    validate(need(mfrowsdown(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(mfrowsdown(), "Select the terms of interest to render DotPlot"))
     mfrowsdown <- mfrowsdown()
     if(is.null(mfrowsdown)){mfrowsdown <- c(1:20)}
     gosMF <- go$down[go$down$Ont=="MF",]
@@ -1978,7 +1979,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot MF down #######################
   output$gobarplotDownMF <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
     mfrowsdown <- mfrowsdown()
     p <- goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
               category = "MF", nrows = mfrowsdown)
@@ -1993,9 +1994,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle MF Down #####################
   output$goCircleDownMF <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( mfrowsdown() , "Select at least 4 rows"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( mfrowsdown() , "Select at least 4 rows"))
     mfrowsdown <- mfrowsdown()
     if(length(mfrowsdown)>=4){
       circ <- data2circle(go=go$down[mfrowsdown, ], res=data$dfilt, genes=genes$Down)
@@ -2012,7 +2013,7 @@ output$barKeggAll <- downloadHandler(
   # ............ ###############################
   # GO table CC DOWN #####################
   output$tableCCdown <- DT::renderDataTable(server=FALSE,{
-    validate(need(goDT$down, "Load file to render table"))
+    shiny::validate(need(goDT$down, "Load file to render table"))
     goDT <- goDT$down
     names(goDT)[names(goDT) == "DE"] <- "DEG"
     names(goDT)[names(goDT) == "P.DE"] <- "p-value"
@@ -2036,7 +2037,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GO plots CC DOWN #####################
   output$plotCCdown <- renderPlotly({
-    validate(need(go$down, "Load file to render plot"))
+    shiny::validate(need(go$down, "Load file to render plot"))
     ccrowsdown <- ccrowsdown()
     if(is.null(ccrowsdown)){ccrowsdown <- c(1:10)}
     gosCC <- go$down[go$down$Ont=="CC",]
@@ -2053,8 +2054,8 @@ output$barKeggAll <- downloadHandler(
   )
   # GO CC dotplot down ################### 
   output$CCDotDown <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
-    validate(need(ccrowsdown(), "Select the terms of interest to render DotPlot"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(ccrowsdown(), "Select the terms of interest to render DotPlot"))
     ccrowsdown <- ccrowsdown()
     if(is.null(ccrowsdown)){ccrowsdown <- c(1:20)}
     gosCC <- go$down[go$down$Ont=="CC",]
@@ -2070,7 +2071,7 @@ output$barKeggAll <- downloadHandler(
   )
   # GO gobarplot CC down #######################
   output$gobarplotDownCC <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
     ccrowsdown <- ccrowsdown()
     goBarplot(enrichGO = go$down, resGO = data$dfilt, genes= genes$Down,
               category = "CC", nrows = ccrowsdown)
@@ -2085,9 +2086,9 @@ output$barKeggAll <- downloadHandler(
   )
   # GO circle CC Down #####################
   output$goCircleDownCC <- renderPlot({
-    validate(need(go$down, "Load file to render dotPlot"))
-    validate(need(data$dfilt,""))
-    validate(need( ccrowsdown() , "Select at least 4 rows"))
+    shiny::validate(need(go$down, "Load file to render dotPlot"))
+    shiny::validate(need(data$dfilt,""))
+    shiny::validate(need( ccrowsdown() , "Select at least 4 rows"))
     ccrowsdown <- ccrowsdown()
     if(length(ccrowsdown)>=4){
       circ <- data2circle(go=go$down[ccrowsdown, ], res=data$dfilt, genes=genes$Down)
@@ -2106,7 +2107,7 @@ output$barKeggAll <- downloadHandler(
   gsearow <- reactive({input$gseaTable_rows_selected}) 
     # GSEA table ##########################
   output$gseaTable <- renderDataTable(server=FALSE,{
-    validate(need(gsea$gsea, "Load file to render table"))
+    shiny::validate(need(gsea$gsea, "Load file to render table"))
     mygsea <- gsea$gsea
     if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
         createAlert(session, anchorId = "gsea", title = "Oops!!", 
@@ -2143,7 +2144,7 @@ output$barKeggAll <- downloadHandler(
   })
   # GSEA plot ##########################
   output$gseaPlot <- renderPlot({
-    validate(need(gsea$gsea, "Load file to render table"))
+    shiny::validate(need(gsea$gsea, "Load file to render table"))
     gseanr <- gsearow()
     if(is.null(gseanr)){gseanr <- c(1)}
     mygsea <- gsea$gsea
@@ -2166,7 +2167,7 @@ output$barKeggAll <- downloadHandler(
   # ...................... ###########
   # #### report #############################
     output$report <- renderUI({
-      validate(need(enrichflag, "" ) )
+      shiny::validate(need(enrichflag, "" ) )
       if(isTRUE(enrichflag$one) ){
         enrichflag$three <- FALSE
         actionButton("report1", "html report")
@@ -2179,6 +2180,16 @@ output$barKeggAll <- downloadHandler(
   observeEvent(input$report3, {
       showModal(popupModal3())
     })
+  
+  observeEvent(input$unselect,{
+    if(input$unselect >0){
+      if(input$unselect %% 2 == 0 ){
+        selectPopUpModal1(session = session)
+      }else{
+        unselectPopUpModal1(session = session)
+      }
+    }
+  })
   
   observeEvent(input$report1, {
       showModal(popupModal1())
@@ -2202,7 +2213,7 @@ output$barKeggAll <- downloadHandler(
   })
   
   output$downloadhtml <- renderUI({
-    validate(need(isTRUE(applyPress$ok), ""))
+    shiny::validate(need(isTRUE(applyPress$ok), ""))
     downloadButton("download", "Download report")
     })
   

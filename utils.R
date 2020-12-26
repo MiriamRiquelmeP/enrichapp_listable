@@ -1571,6 +1571,13 @@ CustomVolcano <- function (toptable, lab, x, y, selectLab = NULL, xlim = c(min(t
     indices <- which(toptable$lab %in% selectLab)
     names.new[indices] <- toptable$lab[indices]
     toptable$lab <- names.new
+  }else{
+    names.new <- rep(NA, length(toptable$lab))
+    indices <- which(toptable$Sig == "FC_Pup" | toptable$Sig =="FC_Pdown")
+    indices <- which( toptable$lab %in% (toptable %>% top_n(., -15, pval))$lab ) 
+    names.new[indices] <- toptable$lab[indices]
+    toptable$lab <- names.new
+    selectLab <- TRUE
   }
   th <- theme_bw(base_size = 24) + theme(legend.background = element_rect(), 
           plot.title = element_text(angle = 0, size = titleLabSize, 
@@ -2844,12 +2851,14 @@ visnetLegend <- function(kggDT = NULL, rows = NULL){
           )
       ),
         footer = tagList(
+          actionButton("unselect","Select/Unselect all"),
           modalButton("Cancel"),
           actionButton("ok", "Apply"),
           uiOutput("downloadhtml")
         )
       )
     }
+
 
 # Popmodal para report 1 ###########################
 popupModal1 <- function() {
