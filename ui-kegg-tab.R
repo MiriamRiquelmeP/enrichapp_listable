@@ -76,11 +76,11 @@ fluidPage(
                                                   column(width = 4,
                                                          plotOutput("legendChorAll", width="100%",
                                                                     height="600px")
-                                                         )) ),
-                                 fluidRow(column(
-                                     width=2,
-                                     downloadButton(outputId = "chordKeggAll","Download SVG")
-                                 ))
+                                                         )) )#,
+                                 # fluidRow(column(
+                                 #     width=2,
+                                 #     downloadButton(outputId = "chordKeggAll","Download SVG")
+                                 # ))
                                  ), #cordplot
                         tabPanel(title = "Dotplot",
                                  plotOutput("keggDotAll"),
@@ -165,7 +165,7 @@ fluidPage(
                                  tagList(fluidRow(
                                      column(
                                          width = 8,
-                                         chorddiagOutput("keggChord",
+                                         mychordplotOutput("keggChord",
                                                          width = "100%",
                                                          height = "600px")
                                      ),
@@ -175,11 +175,11 @@ fluidPage(
                                                     width ="100%",
                                                     height ="600px")
                                      )
-                                 )),
-                                fluidRow(column(
-                                     width=2,
-                                     downloadButton(outputId = "chordKeggUp","Download SVG")
-                                 ))
+                                 ))#,
+                                # fluidRow(column(
+                                #      width=2,
+                                #      downloadButton(outputId = "chordKeggUp","Download SVG")
+                                #  ))
                                  ), #cordplot
                         tabPanel(title = "Dotplot",
                                  plotOutput("keggDotUp"),
@@ -260,7 +260,7 @@ fluidPage(
                                  tagList(fluidRow(
                                      column(
                                          width = 8,
-                                         chorddiagOutput("keggChordDown",
+                                         mychordplotOutput("keggChordDown",
                                                          width = "100%",
                                                          height = "600px")
                                      ),
@@ -270,11 +270,11 @@ fluidPage(
                                                     width ="100%",
                                                     height ="600px")
                                      )
-                                     )),
-                                    fluidRow(column(
-                                     width=2,
-                                     downloadButton(outputId = "chordKeggDown","Download SVG")
-                                 ))
+                                     ))#,
+                                 #    fluidRow(column(
+                                 #     width=2,
+                                 #     downloadButton(outputId = "chordKeggDown","Download SVG")
+                                 # ))
                                  ), #cordplot
                         tabPanel(title = "Dotplot",
                                  plotOutput("keggDotDown"),
