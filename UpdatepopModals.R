@@ -1,4 +1,4 @@
-unselectPopUpModal1 <- function(session){
+unselectPopUpModal3 <- function(session){
     updateCheckboxGroupButtons(
         session = session,
         size = "sm",
@@ -126,7 +126,7 @@ unselectPopUpModal1 <- function(session){
 }
 
 #######################################################
-selectPopUpModal1 <- function(session){
+selectPopUpModal3 <- function(session){
     updateCheckboxGroupButtons(
         session = session,
         size = "sm",
@@ -255,3 +255,76 @@ selectPopUpModal1 <- function(session){
         )
     )
 }
+
+###################################
+selectPopUpModal1 <- function(session){
+    updateCheckboxGroupButtons(
+        size = "sm",
+        session = session,
+        inputId = "modalkeggAll",
+        label = "Select elements to report Kegg All",
+        choices = c("Table", "Barplot", "Chorplot", "Dotplot",
+                    "Heatmap", "Netplot"),
+        selected = c("Table", "Barplot", "Chorplot", "Dotplot",
+                     "Heatmap", "Netplot"),
+        status = "primary",
+        checkIcon = list(
+            yes = icon("ok",
+                       lib = "glyphicon"),
+            no = icon("remove",
+                      lib = "glyphicon")
+        )
+    )
+    updateCheckboxGroupButtons(
+        size = "sm",
+        session = session,
+        inputId = "modalGOAll",
+        label = "Select elements to report GO All",
+        choices = c("Table", "Barplot", "Dotplot"),
+        selected = c("Table", "Barplot", "Dotplot"),
+        status = "primary",
+        checkIcon = list(
+            yes = icon("ok",
+                       lib = "glyphicon"),
+            no = icon("remove",
+                      lib = "glyphicon")
+        )
+    )
+}
+
+###################################
+unselectPopUpModal1  <- function(session){
+    updateCheckboxGroupButtons(
+        size = "sm",
+        session = session,
+        inputId = "modalkeggAll",
+        label = "Select elements to report Kegg All",
+        choices = c("Table", "Barplot", "Chorplot", "Dotplot",
+                    "Heatmap", "Netplot"),
+        selected = c(),
+        status = "primary",
+        checkIcon = list(
+            yes = icon("ok",
+                       lib = "glyphicon"),
+            no = icon("remove",
+                      lib = "glyphicon")
+        )
+    )
+    updateCheckboxGroupButtons(
+        size = "sm",
+        session = session,
+        inputId = "modalGOAll",
+        label = "Select elements to report GO All",
+        choices = c("Table", "Barplot", "Dotplot"),
+        selected = c(),
+        status = "primary",
+        checkIcon = list(
+            yes = icon("ok",
+                       lib = "glyphicon"),
+            no = icon("remove",
+                      lib = "glyphicon")
+        )
+    )
+}
+
+

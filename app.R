@@ -396,6 +396,8 @@ server <- function(input, output, session) {
       goDT$down <- go2DT(enrichdf = go$down, data = genes$Down )
       gsea$gsea <- gseaKegg(data$dfilt[, c("ENTREZID","logFC")], specie() )
       enrichflag$three <- TRUE
+      updateTabItems(session, "previewMenu", "preview")
+
     }
   })
 ## ........................ #####################
@@ -423,7 +425,7 @@ server <- function(input, output, session) {
   ## sidebar menu preview ###################
   output$prevw <- renderMenu({
       shiny::validate(need(isTRUE(df3cols$TF), ""))
-      sidebarMenu(
+      sidebarMenu(id = "previewMenu",
           menuItem(
               "Preview",
               tabName = "preview",
@@ -808,7 +810,7 @@ output$downKrpt <- downloadHandler(
                 print( p[[2]] %>% plotly::ggplotly(tooltip = "all" ));svg$keggAll <- p[[2]] }
         else {print(p[[3]] %>% plotly::ggplotly(tooltip = "all" ));svg$keggAll <- p[[3]] } 
     } else{  # caso de que sea sólo una lista simple
-        p <- plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = "red")
+        p <- plotKegg(enrichdf = kgg$all[rowsAll,], nrows = length(rowsAll), colors = "#045a8d")
         svg$keggAll <- p[[2]] 
         print(p[[1]])
             }
@@ -2181,12 +2183,12 @@ output$barKeggAll <- downloadHandler(
       showModal(popupModal3())
     })
   
-  observeEvent(input$unselect,{
-    if(input$unselect >0){
-      if(input$unselect %% 2 == 0 ){
-        selectPopUpModal1(session = session)
+  observeEvent(input$unselect3,{
+    if(input$unselect3 >0){
+      if(input$unselect3 %% 2 == 0 ){
+        selectPopUpModal3(session = session)
       }else{
-        unselectPopUpModal1(session = session)
+        unselectPopUpModal3(session = session)
       }
     }
   })
@@ -2194,7 +2196,16 @@ output$barKeggAll <- downloadHandler(
   observeEvent(input$report1, {
       showModal(popupModal1())
     })
-  
+
+  observeEvent(input$unselect1,{
+    if(input$unselect1 >0){
+      if(input$unselect1 %% 2 == 0 ){
+        selectPopUpModal1(session = session)
+      }else{
+        unselectPopUpModal1(session = session)
+      }
+    }
+  })
 
   applyPress <- reactiveValues(ok=FALSE)
   observeEvent(input$ok,{
@@ -2317,8 +2328,12 @@ output$barKeggAll <- downloadHandler(
         if("GOcircleplot" %in% vals$GODown){ gocirclegodObj <- TRUE }
       }
       if(!is.null(vals$GSEA)){#para GSEA
-        if("Table" %in% vals$GSEA){ tablegseaObj <- TRUE}
-        if("GSEA plot" %in% vals$GSEA){ plotgseaObj <- TRUE}
+        if( length(which(mygsea@result$p.adjust<=0.05)) == 0 ){
+          tablegseaObj <- FALSE; plotgseaObj <- FALSE
+        }else{
+          if("Table" %in% vals$GSEA){ tablegseaObj <- TRUE}
+          if("GSEA plot" %in% vals$GSEA){ plotgseaObj <- TRUE}
+        }
         }
 
       params <- list( values = vals, datadf = data$df, datadfilt = data$dfilt, annotation=annotation(),

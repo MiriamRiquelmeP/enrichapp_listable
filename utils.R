@@ -2851,7 +2851,7 @@ visnetLegend <- function(kggDT = NULL, rows = NULL){
           )
       ),
         footer = tagList(
-          actionButton("unselect","Select/Unselect all"),
+          actionButton("unselect3","Select/Unselect all"),
           modalButton("Cancel"),
           actionButton("ok", "Apply"),
           uiOutput("downloadhtml")
@@ -2907,6 +2907,7 @@ popupModal1 <- function() {
           )
       ),
         footer = tagList(
+          actionButton("unselect1","Select/Unselect all"),
           modalButton("Cancel"),
           actionButton("ok", "Apply"),
           uiOutput("downloadhtml")
