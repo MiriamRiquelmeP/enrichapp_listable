@@ -35,6 +35,9 @@ library(visNetwork)
 library(ggrepel)
 library(circlize)
 library(mychordplot)
+library(ggwordcloud)
+library(randomcoloR)
+library(tidytext)
 source("global.R")
 source("UpdatepopModals.R")
 source("utils.R")
@@ -1410,6 +1413,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$cirbpall, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud BP all #######################
+  output$cloudBPAll <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    goall <- go$all[go$all$Ont=="BP", ]
+    p <- myggwordcloud(goall)
+    p 
+  }, height = 600)
   # ...................... #############
   # GO table MF all #####################
   output$tableMFall <- DT::renderDataTable(server=FALSE,{
@@ -1523,6 +1533,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$cirmfall, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud MF all #######################
+  output$cloudMFAll <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    goall <- go$all[go$all$Ont=="MF", ]
+    p <- myggwordcloud(goall)
+    p 
+  }, height = 600)
   # ............ ###############################
   # GO table CC all #####################
   output$tableCCall <- DT::renderDataTable(server=FALSE,{
@@ -1637,6 +1654,14 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$circcall, device = "svg", width = 10, units = "in") }
   )
+  
+  # GO cloud CC all #######################
+  output$cloudCCAll <- renderPlot({
+    validate(need(go$all, "Load file to render dotPlot"))
+    goall <- go$all[go$all$Ont=="CC", ]
+    p <- myggwordcloud(goall)
+    p 
+  }, height = 600)
   # ............ ###############################
   # GO table BP UP#####################
   output$tableBP <- DT::renderDataTable(server=FALSE,{
@@ -1733,6 +1758,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$cirbpup, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud BP UP  #######################
+  output$cloudBPUp <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    goup <- go$up[go$up$Ont=="BP", ]
+    p <- myggwordcloud(goup)
+    p 
+  }, height = 600)
   # ............ ###############################
   # GO table MF UP #####################
   output$tableMF <- DT::renderDataTable(server=FALSE,{
@@ -1832,6 +1864,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$cirmfup, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud MF UP  #######################
+  output$cloudMFUp <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    goup <- go$up[go$up$Ont=="MF", ]
+    p <- myggwordcloud(goup)
+    p 
+  }, height = 600)
   # ............ ###############################
   # GO table CC UP #####################
   output$tableCC <- DT::renderDataTable(server=FALSE,{
@@ -1930,6 +1969,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$circcup, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud CC UP  #######################
+  output$cloudCCUp <- renderPlot({
+    validate(need(go$up, "Load file to render dotPlot"))
+    goup <- go$up[go$up$Ont=="CC", ]
+    p <- myggwordcloud(goup)
+    p 
+  }, height = 600)
   # ............ ###############################
   # GO table BP DOWN #####################
   output$tableBPdown <- DT::renderDataTable(server=FALSE,{
@@ -2028,6 +2074,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$cirbpdown, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud BP Down #######################
+  output$cloudBPDown <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    godown <- go$down[go$down$Ont=="BP", ]
+    p <- myggwordcloud(godown)
+    p 
+  }, height = 600)
   # ............ ###############################
   # GO table MF DOWN #####################
   output$tableMFdown <- DT::renderDataTable(server=FALSE,{
@@ -2127,6 +2180,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$cirmfdown, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud MF Down #######################
+  output$cloudMFDown <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    godown <- go$down[go$down$Ont=="MF", ]
+    p <- myggwordcloud(godown)
+    p 
+  }, height = 600)
   # ............ ###############################
   # GO table CC DOWN #####################
   output$tableCCdown <- DT::renderDataTable(server=FALSE,{
@@ -2225,6 +2285,13 @@ output$barKeggAll <- downloadHandler(
     content = function(file){
       ggsave(file, svg$circcdown, device = "svg", width = 10, units = "in") }
   )
+  # GO cloud CC Down #######################
+  output$cloudCCDown <- renderPlot({
+    validate(need(go$down, "Load file to render dotPlot"))
+    godown <- go$down[go$down$Ont=="CC", ]
+    p <- myggwordcloud(godown)
+    p 
+  }, height = 600)
   # ...................... ###########
   # variables gsea ################
   gsearow <- reactive({input$gseaTable_rows_selected}) 
