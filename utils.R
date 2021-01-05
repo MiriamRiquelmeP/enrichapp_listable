@@ -2922,14 +2922,22 @@ myggwordcloud <- function(data){
     unnest_tokens(input = text, output = bigram, token = "ngrams", n = 1 )
   counter <- unigrama %>% 
     dplyr::count(bigram, sort = TRUE)
+  letras <- c(letters, LETTERS)
   bigram_filter <- counter %>% 
-    filter(!bigram %in% stop_words$word)
-  p <- ggwordcloud(bigram_filter$bigram, bigram_filter$n , scale = c(6,1),
-                   min.freq = 2, max.words = 200, random.order = FALSE,
-                   random.color = TRUE,
-                   colors = distinctColorPalette(
-                     length(unique(bigram_filter$n)))  ) +
-    theme(panel.background = element_rect(fill = "#343e48", colour = NA),
-          plot.background = element_rect(fill = "#343e48", colour = NA))
-  return(p)
+    filter(!bigram %in% stop_words$word) %>% 
+    filter(!bigram %in% letras)
+  bigram_filter <- bigram_filter[ - which(!is.na(extract_numeric(bigram_filter$bigram))  ) ,]
+  
+  # p <- ggwordcloud(bigram_filter$bigram, bigram_filter$n , scale = c(6,1),
+  #                  min.freq = 2, max.words = 200, random.order = FALSE,
+  #                  random.color = TRUE,
+  #                  colors = distinctColorPalette(
+  #                    length(unique(bigram_filter$n)))  ) +
+  #   theme(panel.background = element_rect(fill = "#343e48", colour = NA),
+  #         plot.background = element_rect(fill = "#343e48", colour = NA))
+  # return(p)
+  wordcloud::wordcloud(bigram_filter$bigram, bigram_filter$n, random.order = F, random.color = T,
+                       min.freq = 2, max.words = 200, scale = c(6,1),
+                       colors = distinctColorPalette(length(unique(bigram_filter$n))) )
+  #wordcloud2::wordcloud2(bigram_filter, size = 3, minSize = 5)
 }

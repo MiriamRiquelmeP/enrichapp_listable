@@ -2772,7 +2772,7 @@ visnetLegendReport <- function(kggDT = NULL, rows = NULL){
                            individual = TRUE,
                            inputId = "modalGOAll",
                            label = "Select elements to report GO All",
-                           choices = c("Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
+                           choices = c("WordCloud","Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
                            status = "primary",
                            checkIcon = list(
                                yes = icon("ok",
@@ -2786,7 +2786,7 @@ visnetLegendReport <- function(kggDT = NULL, rows = NULL){
                            individual = TRUE,
                            inputId = "modalGOUp",
                            label = "Select elements to report GO Up",
-                           choices = c("Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
+                           choices = c("WordCloud","Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
                            status = "primary",
                            checkIcon = list(
                                yes = icon("ok",
@@ -2800,7 +2800,7 @@ visnetLegendReport <- function(kggDT = NULL, rows = NULL){
                            individual = TRUE,
                            inputId = "modalGODown",
                            label = "Select elements to report GO Down",
-                           choices = c("Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
+                           choices = c("WordCloud", "Table", "Barplot", "Dotplot", "GObarplot", "GOcircleplot"),
                            status = "primary",
                            checkIcon = list(
                                yes = icon("ok",
@@ -2836,3 +2836,29 @@ visnetLegendReport <- function(kggDT = NULL, rows = NULL){
         )
       )
     }
+## myggwordcloud ############################
+myggwordcloudReport <- function(data){
+  df <- data
+  text_df <- tibble( text = paste0( df$Term, collapse = " "), line = 1)
+  unigrama <- text_df %>% 
+    unnest_tokens(input = text, output = bigram, token = "ngrams", n = 1 )
+  counter <- unigrama %>% 
+    dplyr::count(bigram, sort = TRUE)
+  letras <- c(letters, LETTERS)
+  bigram_filter <- counter %>% 
+    filter(!bigram %in% stop_words$word) %>% 
+    filter(!bigram %in% letras)
+  bigram_filter <- bigram_filter[ - which(!is.na(extract_numeric(bigram_filter$bigram))  ) ,]
+  
+  # p <- ggwordcloud(bigram_filter$bigram, bigram_filter$n , scale = c(6,1),
+  #                  min.freq = 2, max.words = 200, random.order = FALSE,
+  #                  random.color = TRUE,
+  #                  colors = distinctColorPalette(
+  #                    length(unique(bigram_filter$n)))  ) +
+  #   theme(panel.background = element_rect(fill = "#343e48", colour = NA),
+  #         plot.background = element_rect(fill = "#343e48", colour = NA))
+  # return(p)
+  wordcloud::wordcloud(bigram_filter$bigram, bigram_filter$n, random.order = F, random.color = T,
+                       min.freq = 2, max.words = 200, scale = c(5,0.7),
+                       colors = distinctColorPalette(length(unique(bigram_filter$n))) )
+}

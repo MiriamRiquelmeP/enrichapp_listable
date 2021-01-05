@@ -1417,9 +1417,17 @@ output$barKeggAll <- downloadHandler(
   output$cloudBPAll <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="BP", ]
-    p <- myggwordcloud(goall)
-    p 
+    # p <- myggwordcloud(goall)
+    # svg$cloudbpall <- p
+    # p 
+    myggwordcloud(goall)
   }, height = 600)
+  
+  output$cloudbpall <- downloadHandler(
+    filename = "cloudbpall.svg",
+    content = function(file){
+      ggsave(file, svg$cloudbpall, device = "svg", width = 10, units = "in") }
+  )
   # ...................... #############
   # GO table MF all #####################
   output$tableMFall <- DT::renderDataTable(server=FALSE,{
@@ -1538,8 +1546,15 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="MF", ]
     p <- myggwordcloud(goall)
+    svg$cloudmfall <- p
     p 
   }, height = 600)
+  
+  output$cloudmfall <- downloadHandler(
+    filename = "cloudmfall.svg",
+    content = function(file){
+      ggsave(file, svg$cloudmfall, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table CC all #####################
   output$tableCCall <- DT::renderDataTable(server=FALSE,{
@@ -1660,8 +1675,14 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="CC", ]
     p <- myggwordcloud(goall)
+    svg$cloudccall <- p
     p 
   }, height = 600)
+  output$cloudccall <- downloadHandler(
+    filename = "cloudccall.svg",
+    content = function(file){
+      ggsave(file, svg$cloudccall, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table BP UP#####################
   output$tableBP <- DT::renderDataTable(server=FALSE,{
@@ -1763,8 +1784,14 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="BP", ]
     p <- myggwordcloud(goup)
+    svg$cloudbpup <- p
     p 
   }, height = 600)
+  output$cloudbpup <- downloadHandler(
+    filename = "cloudbpup.svg",
+    content = function(file){
+      ggsave(file, svg$cloudbpup, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table MF UP #####################
   output$tableMF <- DT::renderDataTable(server=FALSE,{
@@ -1869,8 +1896,14 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="MF", ]
     p <- myggwordcloud(goup)
+    svg$cloudmfup <- p
     p 
   }, height = 600)
+  output$cloudmfup <- downloadHandler(
+    filename = "cloudmfup.svg",
+    content = function(file){
+      ggsave(file, svg$cloudmfup, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table CC UP #####################
   output$tableCC <- DT::renderDataTable(server=FALSE,{
@@ -1974,8 +2007,14 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="CC", ]
     p <- myggwordcloud(goup)
+    svg$cloudccup <- p
     p 
   }, height = 600)
+  output$cloudccup <- downloadHandler(
+    filename = "cloudccup.svg",
+    content = function(file){
+      ggsave(file, svg$cloudccup, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table BP DOWN #####################
   output$tableBPdown <- DT::renderDataTable(server=FALSE,{
@@ -2079,8 +2118,14 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="BP", ]
     p <- myggwordcloud(godown)
+    svg$cloudbpdown <- p
     p 
   }, height = 600)
+  output$cloudbpdown <- downloadHandler(
+    filename = "cloudbpdown.svg",
+    content = function(file){
+      ggsave(file, svg$cloudbpdown, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table MF DOWN #####################
   output$tableMFdown <- DT::renderDataTable(server=FALSE,{
@@ -2185,8 +2230,14 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="MF", ]
     p <- myggwordcloud(godown)
+    svg$cloudmfdown <- p
     p 
   }, height = 600)
+  output$cloudmfdown <- downloadHandler(
+    filename = "cloudmfdown.svg",
+    content = function(file){
+      ggsave(file, svg$cloudmfdown, device = "svg", width = 10, units = "in") }
+  )
   # ............ ###############################
   # GO table CC DOWN #####################
   output$tableCCdown <- DT::renderDataTable(server=FALSE,{
@@ -2290,8 +2341,14 @@ output$barKeggAll <- downloadHandler(
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="CC", ]
     p <- myggwordcloud(godown)
+    svg$cloudccdown <- p
     p 
   }, height = 600)
+  output$cloudccdown <- downloadHandler(
+    filename = "cloudccdown.svg",
+    content = function(file){
+      ggsave(file, svg$cloudccdown, device = "svg", width = 10, units = "in") }
+  )
   # ...................... ###########
   # variables gsea ################
   gsearow <- reactive({input$gseaTable_rows_selected}) 
@@ -2438,9 +2495,9 @@ output$barKeggAll <- downloadHandler(
       tablekguObj <- barkguObj <- chorkguObj <- dotkguObj <- heatkguObj <- netkguObj <- FALSE
       tablekgdObj <- barkgdObj <- chorkgdObj <- dotkgdObj <- heatkgdObj <- netkgdObj <- FALSE
       ## inicializar variables Go
-      tablegoaObj <- bargoaObj <- dotgoaObj <- gobargoaObj <- gocirclegoaObj <- FALSE
-      tablegouObj <- bargouObj <- dotgouObj <- gobargouObj <- gocirclegouObj <- FALSE
-      tablegodObj <- bargodObj <- dotgodObj <- gobargodObj <- gocirclegodObj <- FALSE
+      cloudgoaObj <- tablegoaObj <- bargoaObj <- dotgoaObj <- gobargoaObj <- gocirclegoaObj <- FALSE
+      cloudgouObj <- tablegouObj <- bargouObj <- dotgouObj <- gobargouObj <- gocirclegouObj <- FALSE
+      cloudgodObj <- tablegodObj <- bargodObj <- dotgodObj <- gobargodObj <- gocirclegodObj <- FALSE
       ## inicializar variables GSEA
       tablegseaObj <- plotgseaObj <- FALSE 
       bprowsall <- bprowsall(); mfrowsall <- mfrowsall(); ccrowsall <- ccrowsall()
@@ -2495,6 +2552,7 @@ output$barKeggAll <- downloadHandler(
         if("Netplot" %in% vals$keggDown){ netkgdObj <- TRUE }
       }
       if(!is.null(vals$GOAll)){#para GoAll
+        if("WordCloud" %in% vals$GOAll){cloudgoaObj <- TRUE}
         if("Table" %in% vals$GOAll){ tablegoaObj <- TRUE }
         if("Barplot" %in% vals$GOAll){ bargoaObj <- TRUE }
         if("Dotplot" %in% vals$GOAll){ dotgoaObj <- TRUE }
@@ -2502,6 +2560,7 @@ output$barKeggAll <- downloadHandler(
         if("GOcircleplot" %in% vals$GOAll){ gocirclegoaObj <- TRUE }
       }
       if(!is.null(vals$GOUp)){#para GoUp
+        if("WordCloud" %in% vals$GOUp){cloudgouObj <- TRUE}
         if("Table" %in% vals$GOUp){ tablegouObj <- TRUE }
         if("Barplot" %in% vals$GOUp){ bargouObj <- TRUE }
         if("Dotplot" %in% vals$GOUp){ dotgouObj <- TRUE }
@@ -2509,6 +2568,7 @@ output$barKeggAll <- downloadHandler(
         if("GOcircleplot" %in% vals$GOUp){ gocirclegouObj <- TRUE }
       }
       if(!is.null(vals$GODown)){#para GoDown
+        if("WordCloud" %in% vals$GODown){cloudgodObj <- TRUE}
         if("Table" %in% vals$GODown){ tablegodObj <- TRUE }
         if("Barplot" %in% vals$GODown){ bargodObj <- TRUE }
         if("Dotplot" %in% vals$GODown){ dotgodObj <- TRUE }
@@ -2538,6 +2598,7 @@ output$barKeggAll <- downloadHandler(
                      chorkguObj = chorkguObj, dotkguObj =dotkguObj, heatkguObj = heatkguObj,
                      netkguObj = netkguObj, tablekgdObj = tablekgdObj, barkgdObj = barkgdObj,
                      chorkgdObj = chorkgdObj, dotkgdObj = dotkgdObj, heatkgdObj = heatkgdObj,
+                     cloudgoaObj = cloudgoaObj, cloudgouObj = cloudgouObj, cloudgodObj = cloudgodObj,
                      netkgdObj = netkgdObj, kggup = kgg$up, kggdown = kgg$down, kggdtup = kggDT$up, 
                      kggdtdown = kggDT$down, nrowsup = nrowsup, nrowsdown = nrowsdown, 
                      typebarbpall=typeBarBpAll(), typebarmfall=typeBarMfAll(),
