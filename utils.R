@@ -2915,7 +2915,7 @@ popupModal1 <- function() {
       )
     }
 ## myggwordcloud ############################
-myggwordcloud <- function(data){
+myggwordcloud <- function(data, size=3, minSize=5, weightF=NULL){
   df <- data
   text_df <- tibble( text = paste0( df$Term, collapse = " "), line = 1)
   unigrama <- text_df %>% 
@@ -2936,8 +2936,8 @@ myggwordcloud <- function(data){
   #   theme(panel.background = element_rect(fill = "#343e48", colour = NA),
   #         plot.background = element_rect(fill = "#343e48", colour = NA))
   # return(p)
-  wordcloud::wordcloud(bigram_filter$bigram, bigram_filter$n, random.order = F, random.color = T,
-                       min.freq = 2, max.words = 200, scale = c(6,1),
-                       colors = distinctColorPalette(length(unique(bigram_filter$n))) )
-  #wordcloud2::wordcloud2(bigram_filter, size = 3, minSize = 5)
+  # wordcloud::wordcloud(bigram_filter$bigram, bigram_filter$n, random.order = F, random.color = T,
+  #                      min.freq = 2, max.words = 200, scale = c(6,1),
+  #                      colors = distinctColorPalette(length(unique(bigram_filter$n))) )
+  wordcloud2(bigram_filter, size = size, minSize = minSize)
 }

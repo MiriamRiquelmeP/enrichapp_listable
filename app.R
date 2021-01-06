@@ -36,6 +36,7 @@ library(ggrepel)
 library(circlize)
 library(mychordplot)
 library(ggwordcloud)
+library(wordcloud2)
 library(randomcoloR)
 library(tidytext)
 source("global.R")
@@ -1414,14 +1415,14 @@ output$barKeggAll <- downloadHandler(
       ggsave(file, svg$cirbpall, device = "svg", width = 10, units = "in") }
   )
   # GO cloud BP all #######################
-  output$cloudBPAll <- renderPlot({
+  output$cloudBPAll <- renderWordcloud2({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="BP", ]
     # p <- myggwordcloud(goall)
     # svg$cloudbpall <- p
     # p 
-    myggwordcloud(goall)
-  }, height = 600)
+    myggwordcloud(goall, size = input$size, minSize = input$minSize)
+  })
   
   output$cloudbpall <- downloadHandler(
     filename = "cloudbpall.svg",
