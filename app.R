@@ -409,7 +409,7 @@ server <- function(input, output, session) {
   })
 ## ........................ #####################
 ##datatable preview 1 columna #####################
-  output$table1col <- renderDataTable({
+  output$table1col <- DT::renderDT(server = FALSE,{
   shiny::validate(need(data$df, ""))
     shiny::validate(need( dim(data$df)[2]==3,"")) 
   customButtons <- list(
@@ -417,12 +417,15 @@ server <- function(input, output, session) {
         list(extend="collection", buttons = c("csv", "excel"),
              text="Download", filename="coldata", title="Preview table" ) )
     
-  datatable( data$df, extensions = "Buttons",
+    datatable( data$df, extensions = "Buttons",
                rownames=FALSE,
                filter = list(position="top", clear=FALSE),
                options = list(
                  dom = "Bfrtipl",
                  lengthMenu = list(c(10,25,50,100,-1), c(10,25,50,100,"All")),
+                  columnDefs = list(list(orderable = TRUE,
+                                        className = "details-control",
+                                        targets = 1)),
                  buttons = customButtons,
                  list(pageLength = 10, white_space = "normal")
                )
