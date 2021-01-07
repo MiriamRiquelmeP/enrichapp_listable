@@ -112,8 +112,8 @@ fluidPage(
                 column( width = 9, offset = 3,
                     tabBox( id = "boxPanelMF", width = 12,  height = "650px",# caja con pestañas para los plots
                             tabPanel(title = "GO term cloud",width = "100%", height = "600px",
-                                     fluidRow(plotOutput("cloudMFAll")), 
                                      fluidRow(downloadButton("cloudmfall","Download SVG"))),
+                                     fluidRow(plotOutput("cloudMFAll", height = "600px")), 
                             tabPanel(title = "Barplot",
                                      fluidRow(column(
                                          width = 3,
@@ -189,7 +189,7 @@ fluidPage(
                     tabBox(id = "boxPanelCC", width = 12, height = "650px", # caja con pestañas para los plots
                            tabPanel(title = "GO term cloud", width = "100%", height = "600px",
                                     fluidRow(downloadButton("cloudccall","Download SVG")),
-                                    fluidRow( plotOutput("cloudCCAll") )
+                                    fluidRow( plotOutput("cloudCCAll", height = "600px") )
                                     ),
                             tabPanel(title = "Barplot",
                                      fluidRow(column(
@@ -272,7 +272,7 @@ fluidPage(
                     tabBox( width = 12,  height = "650px",# caja con pestañas para los plots
                             tabPanel(title = "GO term cloud", width = "100%", height = "600px",
                                      fluidRow(downloadButton("cloudbpup","Download SVG")),
-                                     fluidRow( plotOutput("cloudBPUp") )
+                                     fluidRow( plotOutput("cloudBPUp", height = "600px") )
                                      ),
                         tabPanel(title = "Barplot",
                                  fluidRow(column(width=2,
@@ -326,7 +326,7 @@ fluidRow(  # primera fila
                     tabBox( width = 12,  height = "650px",# caja con pestañas para los plots
                         tabPanel(title = "GO term cloud", width = "100%", height = "600px" ,
                                  fluidRow(downloadButton("cloudmfup","Download SVG")),
-                                 fluidRow( plotOutput("cloudMFUp") )
+                                 fluidRow( plotOutput("cloudMFUp", height = "600px") )
                                  ),
                         tabPanel(title = "Barplot",
                                  fluidRow(column(width=2,
@@ -380,7 +380,7 @@ fluidRow(  # primera fila
                     tabBox( width = 12, height = "650px", # caja con pestañas para los plots
                         tabPanel(title = "GO term cloud", width = "100%", height = "600px",
                                  fluidRow(downloadButton("cloudccup","Download SVG")),
-                                 fluidRow( plotOutput("cloudCCUp") )
+                                 fluidRow( plotOutput("cloudCCUp", height = "600px") )
                                  ),
                         tabPanel(title = "Barplot",
                                  fluidRow(column(width=2,
@@ -438,7 +438,7 @@ fluidRow(  # primera fila
                     tabBox( width = 12, height = "650px", # caja con pestañas para los plots
                             tabPanel(title = "GO term cloud",  width = "100%", height = "600px",
                                      fluidRow(downloadButton("cloudbpdown","Download SVG")),
-                                     fluidRow( plotOutput("cloudBPDown") )
+                                     fluidRow( plotOutput("cloudBPDown", height = "600px") )
                                      ),
                         tabPanel(title = "Barplot",
                                  fluidRow(column(width=2,
@@ -492,7 +492,7 @@ fluidRow(  # primera fila
                     tabBox( width = 12, height = "650px", # caja con pestañas para los plots
                         tabPanel(title = "GO term cloud", width = "100%", height = "600px",
                                  fluidRow(downloadButton("cloudmfdown","Download SVG")),
-                                 fluidRow( plotOutput("cloudMFDown") )
+                                 fluidRow( plotOutput("cloudMFDown", height = "600px") )
                                  ),
                         tabPanel(title = "Barplot",
                                  fluidRow(column(width=2,
@@ -546,7 +546,7 @@ fluidRow(  # primera fila
                     tabBox( width = 12, height = "650px",# caja con pestañas para los plots
                         tabPanel(title = "GO term cloud",  width = "100%", height = "600px" ,
                                  fluidRow( downloadButton("cloudccdown","Download SVG")),
-                                 fluidRow( plotOutput("cloudCCDown") )
+                                 fluidRow( plotOutput("cloudCCDown", height = "600px") )
                                  ),
                         tabPanel(title = "Barplot",
                                  fluidRow(column(width=2,

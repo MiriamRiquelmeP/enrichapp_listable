@@ -1418,7 +1418,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudBPAll <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="BP", ]
-    myggwordcloud(goall)
+    myggwordcloud(goall, bg = "#343e48")
   })
   
   output$cloudbpall <- downloadHandler(
@@ -1546,7 +1546,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudMFAll <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="MF", ]
-    myggwordcloud(goall)
+    myggwordcloud(goall, bg = "#343e48")
   })
   
   output$cloudmfall <- downloadHandler(
@@ -1676,7 +1676,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudCCAll <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="CC", ]
-    myggwordcloud(goall)
+    myggwordcloud(goall, bg = "#343e48")
   })
   
   output$cloudccall <- downloadHandler(
@@ -1787,7 +1787,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudBPUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="BP", ]
-    myggwordcloud(goup)
+    myggwordcloud(goup, bg = "#343e48")
   })
   
   output$cloudbpup <- downloadHandler(
@@ -1901,7 +1901,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudMFUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="MF", ]
-    myggwordcloud(goup)
+    myggwordcloud(goup, bg = "#343e48")
   })
   
   output$cloudmfup <- downloadHandler(
@@ -2014,7 +2014,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudCCUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="CC", ]
-    myggwordcloud(goup)
+    myggwordcloud(goup, bg = "#343e48")
   })
   
   output$cloudccup <- downloadHandler(
@@ -2127,7 +2127,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudBPDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="BP", ]
-    myggwordcloud(godown)
+    myggwordcloud(godown, bg = "#343e48")
   })
   
   output$cloudbpdown <- downloadHandler(
@@ -2241,7 +2241,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudMFDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="MF", ]
-    myggwordcloud(godown)
+    myggwordcloud(godown, bg = "#343e48")
   })
   
   output$cloudmfdown <- downloadHandler(
@@ -2354,7 +2354,7 @@ output$barKeggAll <- downloadHandler(
   output$cloudCCDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="CC", ]
-    myggwordcloud(godown)
+    myggwordcloud(godown, bg = "#343e48")
   })
   
   output$cloudccdown <- downloadHandler(
