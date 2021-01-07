@@ -31,15 +31,11 @@ fluidPage(
                                  ) # caja para la tabla
                              )), 
             fluidRow( # 2 fila
-              column(width = 2,
-                    sliderInput("size", label="size", min = 0, max = 8, value = 3, step = 0.5),
-                    sliderInput("minSize", label="minSize", min = 0, max = 10, value = 5, step = 0.5)
-                    ),
                 column( width = 9, offset = 3,
                     tabBox( id = "boxPanelBP", width = 12,  height = "650px",# caja con pestañas para los plots
                             tabPanel(title = "GO term cloud", width = "100%", height = "600px" ,
                                      fluidRow(column(width=12, downloadButton("cloudbpall","Download SVG"))),
-                                     fluidRow(column(width=12, wordcloud2Output("cloudBPAll", height = "600px")))
+                                     fluidRow(column(width=12, plotOutput("cloudBPAll", height = "600px")))
                                      ),
                             tabPanel(title = "Barplot",
                                      fluidRow(column(

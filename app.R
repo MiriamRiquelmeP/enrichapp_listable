@@ -1415,19 +1415,19 @@ output$barKeggAll <- downloadHandler(
       ggsave(file, svg$cirbpall, device = "svg", width = 10, units = "in") }
   )
   # GO cloud BP all #######################
-  output$cloudBPAll <- renderWordcloud2({
+  output$cloudBPAll <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="BP", ]
-    # p <- myggwordcloud(goall)
-    # svg$cloudbpall <- p
-    # p 
-    myggwordcloud(goall, size = input$size, minSize = input$minSize)
+    myggwordcloud(goall)
   })
   
   output$cloudbpall <- downloadHandler(
     filename = "cloudbpall.svg",
     content = function(file){
-      ggsave(file, svg$cloudbpall, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$all[go$all$Ont=="BP", ])
+      dev.off()
+      }
   )
   # ...................... #############
   # GO table MF all #####################
@@ -1546,15 +1546,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudMFAll <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="MF", ]
-    p <- myggwordcloud(goall)
-    svg$cloudmfall <- p
-    p 
-  }, height = 600)
+    myggwordcloud(goall)
+  })
   
   output$cloudmfall <- downloadHandler(
     filename = "cloudmfall.svg",
     content = function(file){
-      ggsave(file, svg$cloudmfall, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$all[go$all$Ont=="MF", ])
+      dev.off()
+    }
   )
   # ............ ###############################
   # GO table CC all #####################
@@ -1675,14 +1676,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudCCAll <- renderPlot({
     validate(need(go$all, "Load file to render dotPlot"))
     goall <- go$all[go$all$Ont=="CC", ]
-    p <- myggwordcloud(goall)
-    svg$cloudccall <- p
-    p 
-  }, height = 600)
+    myggwordcloud(goall)
+  })
+  
   output$cloudccall <- downloadHandler(
     filename = "cloudccall.svg",
     content = function(file){
-      ggsave(file, svg$cloudccall, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$all[go$all$Ont=="CC", ])
+      dev.off()
+    }
   )
   # ............ ###############################
   # GO table BP UP#####################
@@ -1784,14 +1787,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudBPUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="BP", ]
-    p <- myggwordcloud(goup)
-    svg$cloudbpup <- p
-    p 
-  }, height = 600)
+    myggwordcloud(goup)
+  })
+  
   output$cloudbpup <- downloadHandler(
     filename = "cloudbpup.svg",
     content = function(file){
-      ggsave(file, svg$cloudbpup, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$up[go$up$Ont=="BP", ])
+      dev.off()
+    }
   )
   # ............ ###############################
   # GO table MF UP #####################
@@ -1896,14 +1901,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudMFUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="MF", ]
-    p <- myggwordcloud(goup)
-    svg$cloudmfup <- p
-    p 
-  }, height = 600)
+    myggwordcloud(goup)
+  })
+  
   output$cloudmfup <- downloadHandler(
     filename = "cloudmfup.svg",
     content = function(file){
-      ggsave(file, svg$cloudmfup, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$up[go$up$Ont=="MF", ])
+      dev.off()
+    }
   )
   # ............ ###############################
   # GO table CC UP #####################
@@ -2007,14 +2014,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudCCUp <- renderPlot({
     validate(need(go$up, "Load file to render dotPlot"))
     goup <- go$up[go$up$Ont=="CC", ]
-    p <- myggwordcloud(goup)
-    svg$cloudccup <- p
-    p 
-  }, height = 600)
+    myggwordcloud(goup)
+  })
+  
   output$cloudccup <- downloadHandler(
     filename = "cloudccup.svg",
     content = function(file){
-      ggsave(file, svg$cloudccup, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$up[go$up$Ont=="CC", ])
+      dev.off()
+    }
   )
   # ............ ###############################
   # GO table BP DOWN #####################
@@ -2118,14 +2127,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudBPDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="BP", ]
-    p <- myggwordcloud(godown)
-    svg$cloudbpdown <- p
-    p 
-  }, height = 600)
+    myggwordcloud(godown)
+  })
+  
   output$cloudbpdown <- downloadHandler(
     filename = "cloudbpdown.svg",
     content = function(file){
-      ggsave(file, svg$cloudbpdown, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$down[go$down$Ont=="BP", ])
+      dev.off()
+    }
   )
   # ............ ###############################
   # GO table MF DOWN #####################
@@ -2230,14 +2241,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudMFDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="MF", ]
-    p <- myggwordcloud(godown)
-    svg$cloudmfdown <- p
-    p 
-  }, height = 600)
+    myggwordcloud(godown)
+  })
+  
   output$cloudmfdown <- downloadHandler(
     filename = "cloudmfdown.svg",
     content = function(file){
-      ggsave(file, svg$cloudmfdown, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$down[go$down$Ont=="MF", ])
+      dev.off()
+    }
   )
   # ............ ###############################
   # GO table CC DOWN #####################
@@ -2341,14 +2354,16 @@ output$barKeggAll <- downloadHandler(
   output$cloudCCDown <- renderPlot({
     validate(need(go$down, "Load file to render dotPlot"))
     godown <- go$down[go$down$Ont=="CC", ]
-    p <- myggwordcloud(godown)
-    svg$cloudccdown <- p
-    p 
-  }, height = 600)
+    myggwordcloud(godown)
+  })
+  
   output$cloudccdown <- downloadHandler(
     filename = "cloudccdown.svg",
     content = function(file){
-      ggsave(file, svg$cloudccdown, device = "svg", width = 10, units = "in") }
+      svg(file, width = 8, height = 6)
+      myggwordcloud(go$down[go$down$Ont=="CC", ])
+      dev.off()
+    }
   )
   # ...................... ###########
   # variables gsea ################
