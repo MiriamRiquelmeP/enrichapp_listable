@@ -749,7 +749,7 @@ output$lostgene <- renderText({
 output$downVolcano <- downloadHandler(
   filename = "volcano.svg",
   content = function(file){
-    ggsave(file, svg$volcano, "svg")}
+    ggsave(file, svg$volcano, "svg",width = 10, units = "in")}
 )
 
 xy <- reactive({
@@ -1360,8 +1360,6 @@ output$barKeggAll <- downloadHandler(
     plt
   })
   
-  
-  
   output$barBpAll <- downloadHandler(
     filename = "barbpall.svg",
     content = function(file){
@@ -1746,7 +1744,6 @@ output$barKeggAll <- downloadHandler(
     svg$dotbpup <- p
     print(p)
   }, height = reactive( myHeightfunction(bprowsup() ) ) )
-  
   
   output$dotBpUp <- downloadHandler(
     filename = "dotbpup.svg",

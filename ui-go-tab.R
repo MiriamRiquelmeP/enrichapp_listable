@@ -112,8 +112,8 @@ fluidPage(
                 column( width = 9, offset = 3,
                     tabBox( id = "boxPanelMF", width = 12,  height = "650px",# caja con pestañas para los plots
                             tabPanel(title = "GO term cloud",width = "100%", height = "600px",
-                                     fluidRow(downloadButton("cloudmfall","Download SVG"))),
-                                     fluidRow(plotOutput("cloudMFAll", height = "600px")), 
+                                     fluidRow(downloadButton("cloudmfall","Download SVG")),
+                                     fluidRow(plotOutput("cloudMFAll", height = "600px"))), 
                             tabPanel(title = "Barplot",
                                      fluidRow(column(
                                          width = 3,

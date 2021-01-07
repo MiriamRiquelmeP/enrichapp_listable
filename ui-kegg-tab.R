@@ -275,9 +275,9 @@ fluidPage(
                                  # ))
                                  ), #cordplot
                         tabPanel(title = "Dotplot",
-                                 plotOutput("keggDotDown"),
                                  fluidRow(column(width=2,
                                             downloadButton("dotKeggDown","Download SVG"))),
+                                 plotOutput("keggDotDown"),
                                  ), # dotplot
                         tabPanel(title = "Heatmap",
                                  fluidRow(column(width=2,
