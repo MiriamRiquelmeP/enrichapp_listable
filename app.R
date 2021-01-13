@@ -26,6 +26,7 @@ library(pheatmap)
 library(heatmaply)
 library(shinyjs)
 library(shinythemes)
+library(shinymanager)
 library(rgl)
 library(rglwidget)
 library(scales)
@@ -215,10 +216,17 @@ ui <- dashboardPage(title="Rnaseq viewer and report",
                     sidebar,
                     body
 ) # fin del UI
-
+ui <- secure_app(ui, enable_admin = TRUE)
 ########################################## SERVER #################################################
 server <- function(input, output, session) {
   
+    res_auth <- secure_server(
+    check_credentials = check_credentials(
+        "users.sqlite",
+        passphrase = "fps379725"
+    )
+  )
+
     enrichflag=NULL
     
     observeEvent(input$aboutButton, {
