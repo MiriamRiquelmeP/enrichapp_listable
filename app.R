@@ -240,19 +240,16 @@ ui <- secure_app(ui, enable_admin = TRUE, theme = shinythemes::shinytheme("darkl
 ########################################## SERVER #################################################
 server <- function(input, output, session) {
   
-    res_auth <- secure_server(
-    check_credentials = check_credentials(
-        "users.sqlite",
-        passphrase = "xxxxxx"
-    )
-  )
-  # En kirk esto sustituye al de arriba
-  # la base de datos y la contraseña están almacenadas en ~/.users
-  #
-  #   res_auth <- secure_server(
+      res_auth <- secure_server(
+     check_credentials = check_credentials(
+         "/datos/repos/darkEnrichApp/users.sqlite",
+         passphrase = readRDS("/datos/repos/enrichapp_listable/dbpass.Rds")
+     )
+   )
+  #res_auth <- secure_server(
   #   check_credentials = check_credentials(
-  #       "xxxxxxxxxxxxxxxxxx",
-  #       passphrase = readRDS("xxxxxxxxxxxxxxxxx")
+  #       "/datos/repos/darkEnrichApp/users.sqlite",
+  #       passphrase = readRDS("/datos/repos/enrichapp_listable/dbpass.Rds")
   #   )
   # )
     
